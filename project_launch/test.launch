@@ -3,7 +3,7 @@
 <arg name="navigation" default="true"/>
 
 <include file="$(find dd2419_launch)/launch/base.launch">
-    <arg name="ch" default="86"/>
+    <arg name="ch" default="92"/>
 </include>
 
 
@@ -22,9 +22,9 @@
       pkg="rviz"
       args="-d $(find pras_project)/rviz/crazy_flie.rviz" />
 
-<node name="aruco_md"
-      pkg="pras_project"
-      type="arucomd"/>
+<!--<node name="aruco_md"
+      pkg="dd2419_simulation"
+      type="arucomd"/> -->
 
 
 <!-- <node name="task3"
