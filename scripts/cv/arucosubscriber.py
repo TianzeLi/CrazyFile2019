@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# ArUco Subscriber
+# This code detects ArUco markers and transform them to base_link.
+# To be used to know the relative pose between the drone and the ArUco marker
+# to determine an estimated position of the drone.
+
 import sys
 import math
 import json
@@ -17,7 +22,6 @@ from crazyflie_driver.msg import Position
 from aruco_msgs.msg import MarkerArray
 from sensor_msgs.msg import CameraInfo
 
-rad2deg = math.pi/180.0
 
 def markerDetectedCallback(msg):
     global marker, tf_buf
@@ -28,11 +32,11 @@ def markerDetectedCallback(msg):
         marker = msg.markers[i]
         markerId = marker.id
         if markerId != 0:
-            tfFinish = transform_from_marker(marker, tf_buf, broadcaster)
-            broadcaster.sendTransform(tfFinish)
+            transform_from_marker(marker, tf_buf, broadcaster)
+            #broadcaster.sendTransform(tfFinish)
+    
 
-
-def transform_from_marker(m, tf_buf, broadcaster):
+def transform_from_marker():
     # Marker pose in camera_link
     markerPosition = m.pose.pose.position
     markerOrientation = m.pose.pose.orientation
@@ -62,14 +66,6 @@ def transform_from_marker(m, tf_buf, broadcaster):
 
     print('pose = ', poseFinish.pose.position)
     print('orientation = ', poseFinish.pose.orientation)
-
-
-    tfFinish = TransformStamped()
-    tfFinish.header.frame_id = 'cf1/odom'
-    tfFinish.child_frame_id = 'aruco/detected' + str(m.id)
-    tfFinish.transform.translation = poseFinish.pose.position
-    tfFinish.transform.rotation = poseFinish.pose.orientation
-    return tfFinish
 
 def listener():
     rospy.Subscriber('/aruco/markers', MarkerArray, markerDetectedCallback)

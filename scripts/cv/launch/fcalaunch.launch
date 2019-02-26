@@ -1,0 +1,14 @@
+<launch>
+    <include file="$(find dd2419_simulation)/launch/simulation.launch"/>
+    <node pkg="rviz" type="rviz" name="rviz"/>
+
+    <!--Make origin of odom frame same as map frame -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="tf2" args="0 0 0 0 0 0 map cf1/odom"/>
+
+    <include file="$(find dd2419_simulation)/launch/aruco.launch">
+      <arg name="gui" value="false"/>
+    </include>
+
+    <!--: Remove for point 2. This is not necessary really  -->
+    <node pkg="part2" type="navgoal3" name="navgoal"/>
+</launch>

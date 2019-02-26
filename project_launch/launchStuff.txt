@@ -1,0 +1,10 @@
+__Main launch commands__:
+roslaunch pras_project test.launch
+
+
+__Other launch stuff__:
+ArUco - roslaunch dd2419_simulation aruco.launch gui:=false
+Map2Odom - rosrun tf2_ros static_transform_publisher 0 0 0 0 0 0 map cf1/odom
+
+__Simulation__:
+roslaunch dd2419_simulation simulation.launch
