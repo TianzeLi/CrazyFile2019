@@ -16,8 +16,9 @@ from transform import four_point_transform
 class image_converter:
 
   def __init__(self):
-    self.image_pub = rospy.Publisher("/myresult", Image, queue_size=2)
-    self.image_pub2 = rospy.Publisher("/myresult2", Image, queue_size=2)
+    self.image_pub = rospy.Publisher("/cameraimage", Image, queue_size=2)
+    self.image_pub2 = rospy.Publisher("/homographyimage", Image, queue_size=2)
+    self.image_pub3 = rospy.Publisher("/colorimage", Image, queue_size=2)
 
     self.bridge = CvBridge()
     self.image_sub = rospy.Subscriber("/cf1/camera/image_raw", Image, self.callback)
@@ -25,7 +26,11 @@ class image_converter:
 
 
   def callback(self,data):
+    print('My eyes are open...')
     warpSuccess = False
+    areaThresholdCircles = 1500
+    areaThresholdDetection = 1500
+
     # Convert the image from OpenCV to ROS format
     try:
       cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -36,14 +41,22 @@ class image_converter:
     hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
 
     # define range of the color we look for in the HSV space
-    lower_blue = np.array([90,80,50]) # All: 20,0,0 Blac/white: 0,0,250
-    upper_blue = np.array([110,255,255]) # All: 300,300,300 Black/white: 255,5,255
+    lower_blue = np.array([105,80,50]) # All: 20,0,0 Black/white: 0,0,250, Blue: 90,80,50
+    upper_blue = np.array([120,255,255]) # All: 300,300,300 Black/white: 255,5,255, Blue: 110,255,255
+
+    lower_red = np.array([0,70,70])
+    upper_red = np.array([15,255,255])
+
+    lower_yellow = np.array([15,70,70])
+    upper_yellow = np.array([25,255,255])
+
+
 
     # define kerner for smoothing
     kernel = np.ones((3, 3), np.uint8)
 
     # Threshold the HSV image to get only the pixels in ranage
-    mask = cv2.inRange(hsv, lower_blue, upper_blue)
+    mask = cv2.inRange(hsv, lower_red, upper_red)
 
     # morph it
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
@@ -51,6 +64,7 @@ class image_converter:
 
     # Bitwise-AND mask and original image
     res = cv2.bitwise_and(cv_image, cv_image, mask= mask)
+
 
     # find contours usinig cv2 findContuors
     contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -62,21 +76,30 @@ class image_converter:
     largestRectArea = 0
     largestRect = None
     if len(contours) > 0:
-        print("YAAAAS!! I CAN SEE A BLUE(!!!) SIGN")
+        
         for cnt in contours:
             # Find enclosing circles and add to publish
             (x,y),radius = cv2.minEnclosingCircle(cnt)
             center = (int(x),int(y))
             radius = int(radius)
-            cv2.circle(res,center,radius,(0,255,0),2)
-            cv2.putText(res, 'This is a BLUE sign', (center[0]-radius, center[1]+2*radius), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
+            area = math.pi*radius*radius
+            
 
             # Calculate area to determine the largest sign
-            area = math.pi*radius*radius
+            
             if area > largestArea:
                 largestArea = area
                 largestCenter = center
                 largestRadius = radius
+
+            # Save large enough areas
+            if area > areaThresholdCircles:
+              cv2.circle(res,center,radius,(0,255,0),2)
+              cv2.putText(res, 'This is a quite large area of color', (center[0]-radius, center[1]+2*radius), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
+              print("YAAAAS!! I CAN SEE A SIGN")
+            else:
+              print('But I cant see anything... :(')
+
 
 
             # Find enclosing rectangle
@@ -97,7 +120,11 @@ class image_converter:
     elif len(contours) == 0:
         print("NO!!! I CAN'T SEE ANY BLUE SIGNS")
 
-    if largestArea > 1000:
+    #print(largestArea)
+    #print(largestRectArea)
+
+
+    if largestArea > areaThresholdDetection:
         #rospy.loginfo(box)
         # TODO: Section to detect specific sign. NOW: Detect which sign it is. Download simons packge or other way
 
@@ -118,6 +145,7 @@ class image_converter:
     # Publish the image
     try:
       self.image_pub.publish(self.bridge.cv2_to_imgmsg(res, "bgr8")) #"bgr8")
+      self.image_pub3.publish(self.bridge.cv2_to_imgmsg(hsv, "bgr8"))
       if warpSuccess:
         self.image_pub2.publish(self.bridge.cv2_to_imgmsg(warped, "8UC1"))
     except CvBridgeError as e:
