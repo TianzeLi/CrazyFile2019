@@ -76,10 +76,10 @@ class extractsigns:
                         cv2.putText(res, 'This is a sign', (center[0]-radius, center[1]+2*radius), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
                         #print("YAAAAS!! I CAN SEE A SIGN")
 
-                        self.findShapes(mask, res, contours)
+                        self.detectShapes(mask, res, contours)
                         print(colors[i])
 
-    def findShapes(self, mask, res, contours):
+    def detectShapes(self, mask, res, contours):
         print('I can see...')
 
 

@@ -45,7 +45,7 @@ class image_converter:
     upper_blue = np.array([120,255,255]) # All: 300,300,300 Black/white: 255,5,255, Blue: 110,255,255
 
     lower_red = np.array([0,70,70])
-    upper_red = np.array([15,255,255])
+    upper_red = np.array([13,255,255])
 
     lower_yellow = np.array([15,70,70])
     upper_yellow = np.array([25,255,255])
@@ -56,7 +56,9 @@ class image_converter:
     kernel = np.ones((3, 3), np.uint8)
 
     # Threshold the HSV image to get only the pixels in ranage
-    mask = cv2.inRange(hsv, lower_red, upper_red)
+    mask = cv2.inRange(hsv, lower_blue, upper_blue) # BLUE!!
+    #mask = cv2.inRange(hsv, lower_red, upper_red) # RED!!
+    #mask = cv2.inRange(hsv, lower_yellow, upper_yellow) # YELLOW!!
 
     # morph it
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
@@ -64,7 +66,6 @@ class image_converter:
 
     # Bitwise-AND mask and original image
     res = cv2.bitwise_and(cv_image, cv_image, mask= mask)
-
 
     # find contours usinig cv2 findContuors
     contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -83,23 +84,14 @@ class image_converter:
             center = (int(x),int(y))
             radius = int(radius)
             area = math.pi*radius*radius
-            
 
-            # Calculate area to determine the largest sign
-            
+            # Calculate area to determine the largest sign            
             if area > largestArea:
                 largestArea = area
                 largestCenter = center
                 largestRadius = radius
 
-            # Save large enough areas
-            if area > areaThresholdCircles:
-              cv2.circle(res,center,radius,(0,255,0),2)
-              cv2.putText(res, 'This is a quite large area of color', (center[0]-radius, center[1]+2*radius), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
-              print("YAAAAS!! I CAN SEE A SIGN")
-            else:
-              print('But I cant see anything... :(')
-
+            
 
 
             # Find enclosing rectangle
@@ -115,6 +107,15 @@ class image_converter:
             if areaRect > largestRectArea:
                 largestRectArea = area
                 largestRect = box
+
+            # Save large enough areas
+            if area > areaThresholdCircles:
+              #cv2.circle(res,center,radius,(0,255,0),2)
+              cv2.drawContours(res,[largestRect],0,(0,0,255),2)
+              cv2.putText(res, 'This is a quite large area of color', (center[0]-radius, center[1]+2*radius), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
+              print("YAAAAS!! I CAN SEE A SIGN")
+            else:
+              print('But I cant see anything... :(')
 
 
     elif len(contours) == 0:
@@ -132,13 +133,9 @@ class image_converter:
         warped = four_point_transform(mask, [largestRect][0])
         warpSuccess = True
 
-
-
         # detect which sign it is
         detectedTrafficSign = idSign(warped)
         #cv2.putText(res, detectedTrafficSign, (largestCenter[0]-largestRadius, largestCenter[1]+2*largestRadius), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
-
-
 
 
 
