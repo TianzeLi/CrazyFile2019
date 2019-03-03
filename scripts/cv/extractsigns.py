@@ -76,11 +76,13 @@ class extractsigns:
                         cv2.putText(res, 'This is a sign', (center[0]-radius, center[1]+2*radius), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
                         #print("YAAAAS!! I CAN SEE A SIGN")
 
-                        self.detectShapes(mask, res, contours)
+                        self.detectShapes(mask, res, cnt)
                         print(colors[i])
 
-    def detectShapes(self, mask, res, contours):
-        print('I can see...')
+    def detectShapes(self, mask, res, contours, cnt):
+        # If center of minEnclosingCricle are within range of any previously 
+        x = 1
+
 
 
 
