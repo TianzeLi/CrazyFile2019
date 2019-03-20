@@ -1,0 +1,12 @@
+<launch>
+
+
+<arg name="gui" default="true"/>
+
+<param name="robot_description" command="$(find xacro)/xacro.py $(env crazyflie_description)" />
+
+<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find urdf_tutorial)/urdf.rviz" required="true"/>
+
+</launch>

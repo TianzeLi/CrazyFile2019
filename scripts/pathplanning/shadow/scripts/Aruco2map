@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+
+from aruco_msgs.msg import MarkerArray
+
+import math
+import rospy
+import tf2_ros
+import tf2_geometry_msgs
+from geometry_msgs.msg import PoseStamped
+import aruco_msgs.msg
+
+
+# Current goal (global state)
+goal = None
+
+def goal_callback(msg):
+    global goal
+
+
+    #rospy.loginfo('New goal set:\n%s', msg)
+    goal = msg
+
+def publish_cmd(goal):
+    # Need to tell TF that the goal was just generated
+    goal.header.stamp = rospy.Time.now()
+
+
+    cmd = PoseStamped()
+
+    cmd.header.stamp = rospy.Time.now()
+    cmd.header.frame_id = goal.header.frame_id
+
+    cmd.pose.position.x = goal.markers[0].pose.pose.position.x
+    cmd.pose.position.y = goal.markers[0].pose.pose.position.y
+    cmd.pose.position.z = goal.markers[0].pose.pose.position.z
+
+    cmd.pose.orientation.x = goal.markers[0].pose.pose.orientation.x
+    cmd.pose.orientation.y = goal.markers[0].pose.pose.orientation.y
+    cmd.pose.orientation.z = goal.markers[0].pose.pose.orientation.z
+    cmd.pose.orientation.w = goal.markers[0].pose.pose.orientation.w
+
+
+    transform = tf_buf.lookup_transform('map',cmd.header.frame_id,cmd.header.stamp,rospy.Duration(1.0))
+    goal_map = tf2_geometry_msgs.do_transform_pose(cmd,transform)
+
+    pub_cmd.publish(goal_map)
+
+
+rospy.init_node('Aruco2map')
+sub_goal = rospy.Subscriber('/aruco/markers', MarkerArray, goal_callback)
+pub_cmd  = rospy.Publisher('Apna_TV', PoseStamped, queue_size=2)
+tf_buf   = tf2_ros.Buffer()
+tf_lstn  = tf2_ros.TransformListener(tf_buf)
+
+def main():
+    rate = rospy.Rate(10)  # Hz
+ 
+    while not rospy.is_shutdown():
+        if goal:
+            publish_cmd(goal)
+        rate.sleep()
+
+if __name__ == '__main__':
+    main()

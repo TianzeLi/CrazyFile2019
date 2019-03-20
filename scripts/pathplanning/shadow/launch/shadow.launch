@@ -1,0 +1,7 @@
+<launch>
+
+<node pkg="shadow" type="Baselink2Camera_tf" name="Baselink2Camera_tf" />
+<node pkg="shadow" type="Map2odom" name="Map2odom" />
+<node pkg="shadow" type="Aruco2map" name="Aruco2map" />
+
+</launch>
