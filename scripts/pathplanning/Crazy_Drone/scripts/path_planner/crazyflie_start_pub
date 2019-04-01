@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+
+import math
+import rospy
+import tf2_ros
+import tf2_geometry_msgs
+from tf.transformations import euler_from_quaternion
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+from crazyflie_driver.msg import Position
+
+# Current start (global state)
+start = None
+
+def start_callback(msg):
+    global start
+
+    # RViz's "2D Nav Goal" publishes z=0, so add some altitude if needed.
+    if msg.pose.pose.position.z == 0.0:
+        msg.pose.pose.position.z = 0.4
+
+    rospy.loginfo('New start set:\n%s', msg)
+    start = msg
+
+def publish_cmd(start):
+    # Need to tell TF that the goal was just generated
+    start.header.stamp = rospy.Time.now()
+
+    #Convert PoseWithCovarianceStamped to PoseStamped msg
+    start1 = PoseStamped()
+    start1.header.stamp = rospy.Time.now()
+    start1.header.frame_id = start.header.frame_id
+    start1.pose.position.x = start.pose.pose.position.x
+    start1.pose.position.y = start.pose.pose.position.y
+    start1.pose.position.z = start.pose.pose.position.z
+    start1.pose.orientation.x = start.pose.pose.orientation.x
+    start1.pose.orientation.y = start.pose.pose.orientation.y
+    start1.pose.orientation.z = start.pose.pose.orientation.z
+    start1.pose.orientation.w = start.pose.pose.orientation.w
+
+    
+
+    if not tf_buf.can_transform(start1.header.frame_id, 'cf1/odom', start1.header.stamp):
+        rospy.logwarn_throttle(5.0, 'No transform from %s to cf1/odom' % start1.header.frame_id)
+        return
+
+    start1_odom = tf_buf.transform(start1, 'cf1/odom')
+
+    cmd = Position()
+
+    cmd.header.stamp = rospy.Time.now()
+    cmd.header.frame_id = start1_odom.header.frame_id
+
+    cmd.x = start1.pose.position.x
+    cmd.y = start1.pose.position.y
+    cmd.z = start1.pose.position.z
+
+
+    roll, pitch, yaw = euler_from_quaternion((start1_odom.pose.orientation.x,
+                                              start1_odom.pose.orientation.y,
+                                              start1_odom.pose.orientation.z,
+                                              start1_odom.pose.orientation.w))
+
+    cmd.yaw = math.degrees(yaw)
+
+    pub_cmd.publish(cmd)
+
+
+rospy.init_node('crazyflie_start_pub')
+sub_start = rospy.Subscriber('/initialpose', PoseWithCovarianceStamped, start_callback)
+pub_cmd  = rospy.Publisher('/cf1/cmd_position', Position, queue_size=2)
+tf_buf   = tf2_ros.Buffer()	
+tf_lstn  = tf2_ros.TransformListener(tf_buf)
+
+def main():
+    rate = rospy.Rate(10)  # Hz
+    while not rospy.is_shutdown():
+	if start:
+	    publish_cmd(start)
+        rate.sleep()
+
+if __name__ == '__main__':
+    main()
