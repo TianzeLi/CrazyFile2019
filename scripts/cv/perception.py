@@ -18,8 +18,9 @@ from geometry_msgs.msg import PoseStamped
 
 # Self-written functions
 import idSign
-# import pose_tf
+import pose_tf
 
+# Virtual bash
 # cd ~/dd2419_ws/src/dd2419_perception_training/bags
 # cd ~/dd2419_ws/src/pras_project/scripts/cv
 
@@ -27,7 +28,10 @@ import idSign
 class image_converter:
 
   def __init__(self):
+    # publish the masked image with first contour extraction
     self.contour_image_pub = rospy.Publisher("/contourimage", Image, queue_size=2)
+
+    # could pulsh something else you want for testing's sake
     # self.image_pub2 = rospy.Publisher("/homographyimage", Image, queue_size=2)
     # self.image_pub3 = rospy.Publisher("/result", Image, queue_size=2)
 
@@ -45,7 +49,7 @@ class image_converter:
     # fit compressed image into HSV space
     np_arr = np.fromstring(data.data, np.uint8)
     cv_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-
+    # could blur the origin image here
     # cv_image = cv2.GaussianBlur(cv_image,(3,3),0)
 
     hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
@@ -71,6 +75,7 @@ class image_converter:
     lower_ry3 = np.array([10,80,70]) # yellow color
     upper_ry3 = np.array([25,155,225])
 
+    # combine the masks
     mask_b = cv2.inRange(hsv, lower_blue, upper_blue) # BLUE!!
     mask_ry1 = cv2.inRange(hsv, lower_red1, upper_red1) # RED and YELLOW!
     mask_ry2 = cv2.inRange(hsv, lower_red2, upper_red2) # RED and YELLOW!
@@ -89,11 +94,10 @@ class image_converter:
     #                     [1,1,1,1,1],
     #                     [1,1,1,1,1],
     #                     [1,1,1,1,1]], np.uint8)
-
     kernel1 = np.ones((3, 3), np.uint8)
     kernel2 = np.ones((4, 4), np.uint8)
 
-    # # morph it
+    # # morph it, could tune the parameter "iterations"
     mask_total = cv2.dilate(mask_total, kernel1, iterations = 6)
     # mask_total = cv2.erode(mask_total,kernel2,iterations = 2)
     mask_total = cv2.morphologyEx(mask_total, cv2.MORPH_CLOSE, kernel2)
@@ -146,6 +150,8 @@ class image_converter:
                 # print('Area too large')
                 continue
 
+            # make sure the contour has the right shape by checking the arc^2/area ratio, 
+            # which value for circle, square or triangle should be less than 30, 22 actually.
             perimeter = cv2.arcLength(cnt,True)
             if perimeter*perimeter/area > 30:
                 continue
@@ -169,11 +175,12 @@ class image_converter:
             box = cv2.boxPoints(rect)
             box = np.int0(box)
 
+            # check the angle of the rectangle
             angle = rect[2]
             if abs(angle) > 45:
                 continue
 
-            # check w-h ratio
+            # check width-height ratio
             if rect[1][1] > 1.8*rect[1][0]:
                 continue
             if rect[1][0] > 1.8*rect[1][1]:
@@ -201,6 +208,7 @@ class image_converter:
             #     sign_pose = pose_tf.pose_tf(pose, u, v, sign_no)
             #     print(sign_pose)
 
+        # draw all the passed contours
         for idex in range(len(boxes)):
             selected_contour = cv2.drawContours(res,boxes[idex],0,(0,0,255),2)
 

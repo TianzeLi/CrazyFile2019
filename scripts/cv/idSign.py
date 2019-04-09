@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 
-
+# restore the signs into the template list 
 templates = []
 
 templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/airport.png',1))
@@ -21,6 +21,8 @@ templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_traini
 templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/roundabout_warning.png',1))
 templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/stop.png',1))
 
+# change the size and resolution of the templates to mka them more similar to the real detected ones
+# could change this part
 for index in range(len(templates)):
     templates[index] = cv2.resize(templates[index], (30,30), interpolation = cv2.INTER_AREA)
     templates[index] = cv2.GaussianBlur(templates[index],(3,3),0)
