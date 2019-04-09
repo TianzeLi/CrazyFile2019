@@ -26,7 +26,7 @@ class extractsigns:
         # Params
         areaThresholdDetection = 1500
 
-        # Convert the image from OpenCV to ROS format
+        # Convert the image from ROS to OpenCV format
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:

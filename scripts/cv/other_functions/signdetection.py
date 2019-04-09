@@ -8,10 +8,13 @@ import rospy
 import cv2
 import numpy as np
 from std_msgs.msg import String
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
 from transform import four_point_transform
+from matplotlib import pyplot as plt
 
+
+# rosrun image_transport republish compressed in:=/cf1/camera/image_raw/compressed raw out:=/cf1/camera/image_raw
 
 class image_converter:
 
@@ -21,7 +24,7 @@ class image_converter:
     self.image_pub3 = rospy.Publisher("/colorimage", Image, queue_size=2)
 
     self.bridge = CvBridge()
-    self.image_sub = rospy.Subscriber("/cf1/camera/image_raw", Image, self.callback)
+    self.image_sub = rospy.Subscriber("/cf1/camera/image_raw/compressed", CompressedImage, self.callback)
 
 
 
@@ -31,11 +34,14 @@ class image_converter:
     areaThresholdCircles = 1500
     areaThresholdDetection = 1500
 
-    # Convert the image from OpenCV to ROS format
-    try:
-      cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-    except CvBridgeError as e:
-      print(e)
+    # Convert the image from ROS to OpenCV format
+    # try:
+    #   cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+    # except CvBridgeError as e:
+    #   print(e)
+
+    np_arr = np.fromstring(data.data, np.uint8)
+    cv_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
     # Convert BGR to HSV
     hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
@@ -66,9 +72,23 @@ class image_converter:
 
     # Bitwise-AND mask and original image
     res = cv2.bitwise_and(cv_image, cv_image, mask= mask)
+    
+    # # could set a thresold
+    # imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
+    # ret,thresh = cv2.threshold(imgray,127,255,0)
 
     # find contours usinig cv2 findContuors
+    # Each individual contour is a Numpy array of (x,y) coordinates of boundary points of the object
     contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
+
+    # # draw the contours
+    # img = cv2.drawContours(img, contours, -1, (0,255,0), 3)
+
+    # # contour arc length
+    # perimeter = cv2.arcLength(cnt,True)
+
+    # # contour area
+    # area = cv2.contourArea(cnt)
 
     # Define largest detected sign
     largestArea = 0
@@ -112,7 +132,8 @@ class image_converter:
             if area > areaThresholdCircles:
               #cv2.circle(res,center,radius,(0,255,0),2)
               cv2.drawContours(res,[largestRect],0,(0,0,255),2)
-              cv2.putText(res, 'This is a quite large area of color', (center[0]-radius, center[1]+2*radius), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
+              cv2.putText(res, 'This is a quite large area of color', \
+                (center[0]-radius, center[1]+2*radius), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
               print("YAAAAS!! I CAN SEE A SIGN")
             else:
               print('But I cant see anything... :(')
@@ -150,8 +171,50 @@ class image_converter:
 
 
 def idSign(image):
-    return 'This is a sign'
 
+    # #
+    # cv2.matchShapes() 
+
+    # cv2.matchTemplate()
+
+    # min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(results)
+
+
+    img = image
+    img2 = img.copy()
+    template = cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/follow_left.png',0)
+    w, h = template.shape[::-1]
+
+    # All the 6 methods for comparison in a list
+    methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR',
+            'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
+
+    for meth in methods:
+        img = img2.copy()
+        method = eval(meth)
+
+        # Apply template Matching
+        res = cv2.matchTemplate(img,template,method)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+        # If the method is TM_SQDIFF or TM_SQDIFF_NORMED, take minimum
+        if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+            top_left = min_loc
+        else:
+            top_left = max_loc
+        bottom_right = (top_left[0] + w, top_left[1] + h)
+
+        cv2.rectangle(img,top_left, bottom_right, 255, 2)
+
+        plt.subplot(121),plt.imshow(res,cmap = 'gray')
+        plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
+        plt.subplot(122),plt.imshow(img,cmap = 'gray')
+        plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+        plt.suptitle(meth)
+
+        plt.show()
+    
+    # return 'This is a sign'
 
 
 def main(args):
