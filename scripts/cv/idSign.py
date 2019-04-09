@@ -104,9 +104,9 @@ def idSign(image):
         for idex in range(len(boxes)):
             contour_img = cv2.drawContours(img,boxes[idex],0,(0,0,255),2)
 
-        cv2.imshow("second contour", contour_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+            cv2.imshow("second contour", contour_img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
     # return the number of the sign 
     # return sign_no
