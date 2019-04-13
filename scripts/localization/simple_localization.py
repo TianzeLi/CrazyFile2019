@@ -29,10 +29,20 @@ tf_buf = None
 R_d2m = np.eye(3)
 drone_orientation = None
 
+pose_buff = []
+drone_pose = None
+
+x_lastest = None
+y_lastest = None
+
 
 def d_pose_callback(msg):
     global R_d2m
-    global drone_orientation 
+    global drone_orientation
+    global pose_buff
+    global drone_pose
+    global x_lastest
+    global y_lastest 
 
     i = msg.pose.orientation.x
     j = msg.pose.orientation.y
@@ -46,7 +56,34 @@ def d_pose_callback(msg):
     R_d2m = np.linalg.inv(R_d2m)
 
     drone_orientation =[i,j,k,r]
-    # print(R_d2m)
+    if x_lastest == None:
+        x_lastest = msg.pose.position.x
+        y_lastest = msg.pose.position.y
+    if drone_pose == None:
+        drone_pose = msg
+
+    delta_x = msg.pose.position.x - x_lastest
+    delta_y = msg.pose.position.y - y_lastest
+
+    drone_pose.header.stamp = rospy.Time.now()
+    drone_pose.header.frame_id = "map"
+    drone_pose.pose.position.x =  drone_pose.pose.position.x + delta_x
+    drone_pose.pose.position.y = drone_pose.pose.position.y + delta_y
+    drone_pose.pose.position.z = msg.pose.position.x
+
+    drone_pose.pose.orientation.w = drone_orientation[3]
+    drone_pose.pose.orientation.x = drone_orientation[0]
+    drone_pose.pose.orientation.y = drone_orientation[1]
+    drone_pose.pose.orientation.z = drone_orientation[2]
+
+    x_lastest = msg.pose.position.x
+    y_lastest = msg.pose.position.y
+
+    print("POSE")
+    print(drone_pose.pose.position.x - msg.pose.position.x)
+    print(drone_pose.pose.position.y - msg.pose.position.y)
+    # print(drone_pose.pose.position.z - msg.pose.position.x)
+    print("\n\n")
 
 
 
@@ -55,6 +92,7 @@ def pose_callback(msg):
     global R_d2m
     global drone_orientation
     global arucos
+    global drone_pose
 
     ###########################################################################
     # transform from camera_link to base_link, working fine!
@@ -130,11 +168,11 @@ def pose_callback(msg):
     drone_pose.pose.orientation.y = drone_orientation[1]
     drone_pose.pose.orientation.z = drone_orientation[2]
 
-    print("POSE")
-    print(drone_pose.pose.position.x)
-    print(drone_pose.pose.position.y)
-    print(drone_pose.pose.position.z)
-    print("\n\n\n\n")
+    # print("POSE")
+    # print(drone_pose.pose.position.x)
+    # print(drone_pose.pose.position.y)
+    # print(drone_pose.pose.position.z)
+    # print("\n\n\n\n")
 
 
 
