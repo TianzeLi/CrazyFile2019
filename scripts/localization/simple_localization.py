@@ -25,13 +25,15 @@ from aruco_msgs.msg import MarkerArray
 import tf
 from arucos import arucos, Rlist
 
+#########################################
+# The estimated pose in in this variable!
+drone_pose = None
+#########################################
+
 tf_buf = None
 R_d2m = np.eye(3)
 drone_orientation = None
-
 pose_buff = []
-drone_pose = None
-
 x_lastest = None
 y_lastest = None
 
@@ -79,11 +81,11 @@ def d_pose_callback(msg):
     x_lastest = msg.pose.position.x
     y_lastest = msg.pose.position.y
 
-    print("POSE")
-    print(drone_pose.pose.position.x - msg.pose.position.x)
-    print(drone_pose.pose.position.y - msg.pose.position.y)
-    # print(drone_pose.pose.position.z - msg.pose.position.x)
-    print("\n\n")
+    # print("POSE")
+    # print(drone_pose.pose.position.x - msg.pose.position.x)
+    # print(drone_pose.pose.position.y - msg.pose.position.y)
+    # # print(drone_pose.pose.position.z - msg.pose.position.x)
+    # print("\n\n")
 
 
 
