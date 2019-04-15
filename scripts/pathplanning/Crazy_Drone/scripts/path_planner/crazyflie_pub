@@ -8,8 +8,28 @@ from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from crazyflie_driver.msg import Position
 
+import simple_localization 
+
+
 # Current goal (global state)
 goal = None
+
+drone_origin_x = 0
+drone_origin_y = 0
+# drone_pose = None
+
+
+def d_pose_callback(msg):
+    global drone_origin_x
+    global drone_origin_y
+
+    drone_origin_x = msg.pose.orientation.x
+    drone_origin_y = msg.pose.orientation.y
+
+def pose_callback(msg):
+    global drone_pose
+    drone_pose = msg
+
 
 def goal_callback(msg):
     global goal
@@ -22,6 +42,7 @@ def goal_callback(msg):
     goal = msg
 
 def publish_cmd(goal):
+    global drone_pose
     # Need to tell TF that the goal was just generated
     goal.header.stamp = rospy.Time.now()
 
@@ -48,10 +69,20 @@ def publish_cmd(goal):
 
     cmd.yaw = math.degrees(yaw)
 
+    # Newly added part
+    goal_odom.pose.orientation.x = goal_odom.pose.orientation.x + drone_pose.pose.position.x - drone_origin_x
+    goal_odom.pose.orientation.y = goal_odom.pose.orientation.y + drone_pose.pose.position.x - drone_origin_y
+
+
     pub_cmd.publish(cmd)
 
 
 rospy.init_node('crazyflie_pub')
+
+drone_pose_origin = rospy.Subscriber('/cf1/pose', PoseStamped, d_pose_callback)
+drone_pose_origin = rospy.Subscriber('/localization', PoseStamped, pose_callback)
+
+
 sub_goal = rospy.Subscriber('/debug_pose', PoseStamped, goal_callback)
 pub_cmd  = rospy.Publisher('/cf1/cmd_position', Position, queue_size=2)
 tf_buf   = tf2_ros.Buffer()	

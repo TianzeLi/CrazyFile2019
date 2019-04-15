@@ -83,11 +83,13 @@ def d_pose_callback(msg):
     x_lastest = msg.pose.position.x
     y_lastest = msg.pose.position.y
 
-    print("POSE")
-    print(drone_pose.pose.position.x - msg.pose.position.x)
-    print(drone_pose.pose.position.y - msg.pose.position.y)
-    # print(drone_pose.pose.position.z - msg.pose.position.x)
-    print("\n")
+    # print("POSE")
+    # print(drone_pose.pose.position.x - msg.pose.position.x)
+    # print(drone_pose.pose.position.y - msg.pose.position.y)
+    # # print(drone_pose.pose.position.z - msg.pose.position.x)
+    # print("\n")
+
+    position_estimated.publish(drone_pose)
 
 
 
@@ -172,6 +174,8 @@ def pose_callback(msg):
     drone_pose.pose.orientation.y = drone_orientation[1]
     drone_pose.pose.orientation.z = drone_orientation[2]
 
+    position_estimated.publish(drone_pose)
+
     # print("POSE")
     # print(drone_pose.pose.position.x)
     # print(drone_pose.pose.position.y)
@@ -228,12 +232,16 @@ def pose_callback(msg):
     # marker_tfpb.sendTransform(mt)
 
 
+rospy.init_node('measurement_from_aruco')
+rate = rospy.Rate(10000)  # Hz
+
+drone_pose_origin = rospy.Subscriber('/cf1/pose', PoseStamped, d_pose_callback)
+position_estimated  = rospy.Publisher('/localization', PoseStamped, queue_size=2)
 
 def main():
     global tf_buf 
 
-    rospy.init_node('measurement_from_aruco')
-    rate = rospy.Rate(10000)  # Hz
+    
 
     # tf from base_link to camera_link only valid for simulation! 
     tfpb = tf2_ros.StaticTransformBroadcaster()
@@ -260,6 +268,8 @@ def main():
 
     drone_pose_origin = rospy.Subscriber('/cf1/pose', PoseStamped, d_pose_callback)
     marker_detection = rospy.Subscriber('/aruco/markers', MarkerArray, pose_callback)
+
+    # position_cmd.publish(drone_pose)
 
 
 
