@@ -40,10 +40,11 @@
 
   <node name="rviz" pkg="rviz" type="rviz" />
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find pras_project)/scripts/pathplanning/maps/empty.yaml">
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find pras_project)/scripts/pathplanning/maps/Map5.yaml">
   </node>
-<node pkg="pras_project" type="$(find pras_project)/scripts/pathplanning/crazyflie_pub" name="crazyflie_pub" />
-<node name="trajectory_planner" pkg="pras_project" type="$(find pras_project)/scripts/pathplanning/trajectory_planner.py">
+
+<node pkg="pras_project" type="crazyflie_pub" name="crazyflie_pub" />
+<node name="trajectory_planner" pkg="pras_project" type="trajectory_planner.py">
   <remap from="grid_map" to="map"/>
 </node>
 
