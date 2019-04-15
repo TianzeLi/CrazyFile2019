@@ -16,7 +16,7 @@
       pkg="tf2_ros"
       type="static_transform_publisher"
       args="$0 0 0 0 0 0 map cf1/odom"/>
-rosl
+
 <!-- <node type="rviz"
       name="rviz"
       pkg="rviz"
@@ -31,21 +31,15 @@ rosl
       pkg="cf_first_flight"
       type="task3"/> -->
 
-<<<<<<< HEAD
+
  <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie2.urdf.xacro" />
-=======
-
-<node pkg="shadow" type="Map2odom" name="Map2odom" />
-
-  <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie2.urdf.xacro" />
->>>>>>> 2996f05076bdae208c01e18bafe2825565a13486
 
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
   
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
 
   <node name="rviz" pkg="rviz" type="rviz" />
-<<<<<<< HEAD
+
   <node name="map_server" pkg="map_server" type="map_server" args="$(find pras_project)/scripts/pathplanning/maps/empty.yaml">
   </node>
 <node pkg="pras_project" type="$(find pras_project)/scripts/pathplanning/crazyflie_pub" name="crazyflie_pub" />
@@ -53,19 +47,4 @@ rosl
   <remap from="grid_map" to="map"/>
 </node>
 
-
-=======
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find Crazy_Drone)/scripts/maps/Map5.yaml">
-  </node>
-
-
-<node pkg="Crazy_Drone" type="crazyflie_pub" name="crazyflie_pub" />
-
-<!-- <node pkg="Crazy_Drone" type="crazyflie_start_pub" name="crazyflie_start_pub" /> -->
-
-<node name="trajectory_planner" pkg="Crazy_Drone" type="trajectory_planner.py">
-  <remap from="grid_map" to="map"/>
-</node>
-
->>>>>>> 2996f05076bdae208c01e18bafe2825565a13486
 </launch>
