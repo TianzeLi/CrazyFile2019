@@ -1,0 +1,50 @@
+{
+
+  "airspace": {
+    "min": [-4, -2, 0.0],
+    "max": [ 2,  2, 2.0]
+  },
+
+  "gate_size": [0.40, 0.40],
+  "marker_size": [0.197, 0.197],
+  "roadsign_size": [0.20, 0.20],
+
+  "markers": [
+    {"id": 1, "pose": {"position": [ 1.25, -0.50, 0.10], "orientation": [  0.0, -90.0, -135.0]}},
+    {"id": 2, "pose": {"position": [ 0.25,  0.50, 0.10], "orientation": [  0.0, -90.0, -135.0]}},
+    {"id": 3, "pose": {"position": [-1.50,  1.00, 0.10], "orientation": [  0.0, -90.0,  -90.0]}},
+    {"id": 4, "pose": {"position": [-3.00,  0.50, 0.10], "orientation": [  0.0, -90.0,  -90.0]}},
+    {"id": 5, "pose": {"position": [-2.50, -0.75, 0.10], "orientation": [  0.0, -90.0,    0.0]}},
+    {"id": 6, "pose": {"position": [-1.50, -0.75, 0.10], "orientation": [  0.0, -90.0,   90.0]}},
+    {"id": 7, "pose": {"position": [ 0.25, -0.50, 0.10], "orientation": [  0.0, -90.0,  135.0]}},
+    {"id": 8, "pose": {"position": [ 1.25,  0.50, 0.10], "orientation": [  0.0, -90.0,  135.0]}},
+    {"id":10, "pose": {"position": [-2.00,  0.00, 0.00], "orientation": [ 90.0,   0.0,    0.0]}},
+    {"id":11, "pose": {"position": [-2.50,  0.50, 0.00], "orientation": [ 90.0,   0.0,    0.0]}},
+    {"id":12, "pose": {"position": [-1.50,  0.50, 0.00], "orientation": [ 90.0,   0.0,    0.0]}},
+    {"id":13, "pose": {"position": [-0.50,  0.50, 0.00], "orientation": [ 90.0,   0.0,    0.0]}},
+    {"id":14, "pose": {"position": [-0.50,  0.00, 0.00], "orientation": [ 90.0,   0.0,    0.0]}},
+    {"id":15, "pose": {"position": [ 2.00,  0.00, 0.00], "orientation": [ 90.0,   0.0,    0.0]}}
+  ],
+
+  "gates": [
+    {"id": 1, "heading":  135.0, "position": [  1.25, -0.50, 0.00]},
+    {"id": 2, "heading":  135.0, "position": [  0.25,  0.50, 0.00]},
+    {"id": 3, "heading":  180.0, "position": [ -1.50,  1.00, 0.00]},
+    {"id": 4, "heading":  180.0, "position": [ -3.00,  0.50, 0.00]},
+    {"id": 5, "heading":  -90.0, "position": [ -2.50, -0.75, 0.00]},
+    {"id": 6, "heading":    0.0, "position": [ -1.50, -0.75, 0.00]},
+    {"id": 7, "heading":   45.0, "position": [  0.25, -0.50, 0.00]},
+    {"id": 8, "heading":   45.0, "position": [  1.25,  0.50, 0.00]}
+  ],
+
+  "walls": [
+    {"plane": {"start": [-2.0,  2.0, 0.0], "stop": [-2.0,  0.25, 0.5]}},
+    {"plane": {"start": [-2.0,  0.25, 0.0], "stop": [-1.0, 0.25, 0.25]}}
+  ],
+
+  "roadsigns": [
+  ]
+
+}
+
+
