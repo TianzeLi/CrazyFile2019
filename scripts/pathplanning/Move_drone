@@ -5,6 +5,9 @@ import rospy
 import tf2_geometry_msgs
 from geometry_msgs.msg import PoseStamped
 
+import simple_localization 
+
+
 rospy.init_node('Move_drone')
 pub_cmd  = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=2)
 

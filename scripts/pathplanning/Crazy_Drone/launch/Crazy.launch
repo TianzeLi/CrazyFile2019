@@ -9,7 +9,7 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
 
   <node name="rviz" pkg="rviz" type="rviz" />
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find Crazy_Drone)/scripts/maps/empty.yaml">
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find Crazy_Drone)/scripts/maps/Map5.yaml">
   </node>
 
 
