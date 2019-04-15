@@ -31,4 +31,19 @@
       pkg="cf_first_flight"
       type="task3"/> -->
 
+ <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie2.urdf.xacro" />
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+  <node name="rviz" pkg="rviz" type="rviz" />
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find pras_project)/scripts/pathplanning/maps/empty.yaml">
+  </node>
+<node pkg="pras_project" type="$(find pras_project)/scripts/pathplanning/crazyflie_pub" name="crazyflie_pub" />
+<node name="trajectory_planner" pkg="pras_project" type="$(find pras_project)/scripts/pathplanning/trajectory_planner.py">
+  <remap from="grid_map" to="map"/>
+</node>
+
+
 </launch>
