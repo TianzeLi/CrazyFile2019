@@ -1,0 +1,11 @@
+<launch>
+
+   <include file="$(find trajectory_planner_py)/launch/rviz_trajectory_planner.launch"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find Crazy_Drone)/scripts/maps/empty.yaml">
+  </node>
+
+
+<node name="trajectory_planner" pkg="Crazy_Drone" type="trajectory_planner.py">
+  <remap from="grid_map" to="map"/>
+</node>
+</launch>

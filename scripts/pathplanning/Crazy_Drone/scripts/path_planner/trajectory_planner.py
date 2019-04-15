@@ -18,19 +18,19 @@ class TrajectoryPlanner:
         self.start = None
         self.goal = None
 
-        self.moves = [Move(0.01, 0),  # forward
-                      Move(-0.01, 0),  # back
+        self.moves = [Move(0.02, 0),  # forward
+                      Move(-0.02, 0),  # back
                       Move(0, 1.5708),  # turn left 90
                       Move(0, -1.5708)] # turn right 90
-        self.robot = Robot(0.1, 0.1)
+        self.robot = Robot(0.101, 0.101)
         self.is_working = False # Replace with mutex after all
 
         self.map_subscriber = rospy.Subscriber("map", OccupancyGrid, self.new_map_callback)
         self.start_subscriber = rospy.Subscriber("initialpose", PoseWithCovarianceStamped, self.new_start_callback)
         self.goal_subscriber = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.new_goal_callback)
 
-        self.path_publisher = rospy.Publisher("trajectory", MarkerArray, queue_size=1)
-        self.pose_publisher = rospy.Publisher("debug_pose", PoseStamped, queue_size=1)
+        self.path_publisher = rospy.Publisher("trajectory", MarkerArray, queue_size=3)
+        self.pose_publisher = rospy.Publisher("debug_pose", PoseStamped, queue_size=3)
 
         # what will be there. A module goes into variable. Isn't it too much memory consumption. Maybe I should assign function replan() to this variable?
         self.planner = planners.astar.replan

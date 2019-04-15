@@ -9,15 +9,13 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
 
   <node name="rviz" pkg="rviz" type="rviz" />
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find Crazy_Drone)/scripts/maps/empty.yaml">
+  </node>
 
-  <arg name="Map1" default="/home/maverick/dd2419_ws/src/Crazy_Drone/scripts/Map1.yaml"/>
-  <node name="map_server" pkg="map_server" type="map_server" args="$(arg Map1)" />
-
-<node pkg="Crazy_Drone" type="odom_publish" name="odom_publish" />
 
 <node pkg="Crazy_Drone" type="crazyflie_pub" name="crazyflie_pub" />
 
-<node pkg="Crazy_Drone" type="crazyflie_start_pub" name="crazyflie_start_pub" />
+<!-- <node pkg="Crazy_Drone" type="crazyflie_start_pub" name="crazyflie_start_pub" /> -->
 
 <node name="trajectory_planner" pkg="Crazy_Drone" type="trajectory_planner.py">
   <remap from="grid_map" to="map"/>

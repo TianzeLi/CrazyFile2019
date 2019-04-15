@@ -16,7 +16,7 @@ def start_callback(msg):
 
     # RViz's "2D Nav Goal" publishes z=0, so add some altitude if needed.
     if msg.pose.pose.position.z == 0.0:
-        msg.pose.pose.position.z = 0.4
+        msg.pose.pose.position.z = 0.3
 
     rospy.loginfo('New start set:\n%s', msg)
     start = msg
@@ -76,7 +76,8 @@ def main():
     while not rospy.is_shutdown():
 	if start:
 	    publish_cmd(start)
-        rate.sleep()
+            if pub_cmd.get_num_connections() > 0:
+	    	rospy.signal_shutdown('just_because')
 
 if __name__ == '__main__':
     main()

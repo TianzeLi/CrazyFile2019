@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+from nav_msgs.msg import OccupancyGrid, Path
+import json
+import math
+import numpy
+
+# Load world JSON
+with open('/home/maverick/dd2419_ws/src/course_packages/dd2419_resources/worlds_json/awesome.world.json') as f:
+	world = json.load(f)
+
+
+# Initialize occupancy grid message
+class map_grid:
+
+	def __init__(self,world):
+		self.height = 500
+		self.width = 500
+		self.resolution = 0.05
+		self.frame_id = '/map'
+		#self.img = np.zeros((self.height, self.width), np.uint8)
+		self.img = np.zeroes(shape=(5,5))
+        print(self.img)
+'''
+	def coord_to_indices(self, x, y):
+        i = int((y - self.origin.y) / self.resolution)
+        j = int((x - self.origin.x) / self.resolution)
+        return (i, j)
+
+
+        m = MapMetaData()
+        m.resolution = resolution
+        m.width = width
+        m.height = height
+        pos = np.array([-width * resolution / 2, -height * resolution / 2, 0])
+        quat = np.array([0, 0, 0, 1])
+        m.origin = Pose()
+        m.origin.position.x, m.origin.position.y = pos[:2]
+        self.map_meta_data = m
+
+        rospy.Timer(rospy.Duration(1), self.pub_grid)
+
+    def pub_grid(self, *args):
+        grid = self.grid_drawer.img
+
+        ogrid = OccupancyGrid()
+        ogrid.header.frame_id = self.frame_id
+        ogrid.info = self.map_meta_data
+        ogrid.data = np.subtract(np.flipud(grid).flatten(), 1).astype(np.int8).tolist()
+
+self.ogrid_pub.publish(ogrid)
+
+
+
+
+
+map_msg = OccupancyGrid()
+map_msg.header.frame_id = 'map'
+resolution = 0.01
+width = 500
+height = 500
+
+# Map update rate (defaulted to 5 Hz)
+rate = 5.0
+'''

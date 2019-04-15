@@ -72,7 +72,7 @@ class State:
         pose.header.frame_id = "map"
         pose.pose.position.x = self.x
         pose.pose.position.y = self.y
-        pose.pose.position.z = 0.4
+        pose.pose.position.z = 0.3
 
         quaternion = tf.transformations.quaternion_from_euler(0, 0, self.theta)
         pose.pose.orientation.x = quaternion[0]

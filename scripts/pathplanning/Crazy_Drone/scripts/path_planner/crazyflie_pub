@@ -16,7 +16,7 @@ def goal_callback(msg):
 
     # RViz's "2D Nav Goal" publishes z=0, so add some altitude if needed.
     if msg.pose.position.z == 0.0:
-        msg.pose.position.z = 0.4
+        msg.pose.position.z = 0.3
 
     rospy.loginfo('New goal set:\n%s', msg)
     goal = msg
@@ -33,7 +33,7 @@ def publish_cmd(goal):
 
     cmd = Position()
 
-    cmd.header.stamp = rospy.Time.now()
+    cmd.header.stamp = goal.header.stamp
     cmd.header.frame_id = goal_odom.header.frame_id
 
     cmd.x = goal.pose.position.x
@@ -53,12 +53,12 @@ def publish_cmd(goal):
 
 rospy.init_node('crazyflie_pub')
 sub_goal = rospy.Subscriber('/debug_pose', PoseStamped, goal_callback)
-pub_cmd  = rospy.Publisher('/cf1/cmd_position', Position, queue_size=2)
+pub_cmd  = rospy.Publisher('/cf1/cmd_position', Position, queue_size=3)
 tf_buf   = tf2_ros.Buffer()	
 tf_lstn  = tf2_ros.TransformListener(tf_buf)
 
 def main():
-    rate = rospy.Rate(10)  # Hz
+    rate = rospy.Rate(30)  # Hz
     while not rospy.is_shutdown():
         if goal:
             publish_cmd(goal)
