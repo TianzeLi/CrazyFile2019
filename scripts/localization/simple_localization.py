@@ -27,6 +27,8 @@ from arucos import arucos, Rlist
 
 #########################################
 # The estimated pose in in this variable!
+# The difference of wrong one and "correct" one is drone_pose - wrong one,
+# Just plus it to the goal you send to cmd_position. 
 drone_pose = None
 #########################################
 
@@ -81,11 +83,11 @@ def d_pose_callback(msg):
     x_lastest = msg.pose.position.x
     y_lastest = msg.pose.position.y
 
-    # print("POSE")
-    # print(drone_pose.pose.position.x - msg.pose.position.x)
-    # print(drone_pose.pose.position.y - msg.pose.position.y)
-    # # print(drone_pose.pose.position.z - msg.pose.position.x)
-    # print("\n\n")
+    print("POSE")
+    print(drone_pose.pose.position.x - msg.pose.position.x)
+    print(drone_pose.pose.position.y - msg.pose.position.y)
+    # print(drone_pose.pose.position.z - msg.pose.position.x)
+    print("\n")
 
 
 
