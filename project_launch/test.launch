@@ -31,6 +31,7 @@
       pkg="cf_first_flight"
       type="task3"/> -->
 
+<node pkg="pras_project" type="simple_localization.py" name="measurement_from_aruco" />
 
  <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie2.urdf.xacro" />
 
