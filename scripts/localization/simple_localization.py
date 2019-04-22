@@ -4,31 +4,52 @@
 # Using the aruco marker pose detection and compare with the pose in json file 
 
 # Virtual Bash:
-# roslaunch pras_project nav_challenge.launch
+# roslaunch pras_project test2.launch
 # cd dd2419_ws/src/pras_project/scripts/localization/
 # python simple_localization.py 
 
-
-# Current problem: ???
-
+# Current problem: wrong assumption?
+# Aruco marker orientation also given in camera_link frame, so make us of that!
 
 import math
 import numpy as np
 import rospy
-import json
 import tf2_ros
 import tf2_geometry_msgs
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from tf.transformations import *
 from geometry_msgs.msg import PoseStamped, TransformStamped, Vector3
-from crazyflie_driver.msg import Position
+# from crazyflie_driver.msg import Position
 from aruco_msgs.msg import MarkerArray
 import tf
 from arucos import arucos, Rlist
 
 #########################################
+# RPY to convert: 90deg, 0, -90deg
+q = quaternion_from_euler(1.5707, 0, -1.5707)
+#########################################
+# To apply the rotation of one quaternion to a pose, simply multiply the previous quaternion of the pose 
+# by the quaternion representing the desired rotation. The order of this multiplication matters. 
+q_orig = quaternion_from_euler(0, 0, 0)
+q_rot = quaternion_from_euler(pi, 0, 0)
+q_new = quaternion_multiply(q_rot, q_orig)
+print q_new
+#########################################
+# Here's an example to get the relative rotation from the previous robot pose to the current robot pose: 
+q1_inv[0] = prev_pose.pose.orientation.x
+q1_inv[1] = prev_pose.pose.orientation.y
+q1_inv[2] = prev_pose.pose.orientation.z
+q1_inv[3] = -prev_pose.pose.orientation.w # Negate for inverse
+
+q2[0] = current_pose.pose.orientation.x
+q2[1] = current_pose.pose.orientation.y
+q2[2] = current_pose.pose.orientation.z
+q2[3] = current_pose.pose.orientation.w
+ 
+qr = tf.transformations.quaternion_multiply(q2, q1_inv)
+
+#########################################
 # The estimated pose in in this variable!
-# The difference of wrong one and "correct" one is drone_pose - wrong one,
-# Just plus it to the goal you send to cmd_position. 
 drone_pose = None
 #########################################
 
@@ -38,28 +59,31 @@ drone_orientation = None
 pose_buff = []
 x_lastest = None
 y_lastest = None
+drone_z = None
 
 
-def d_pose_callback(msg):
+def predict_callback(msg):
     global R_d2m
     global drone_orientation
     global pose_buff
     global drone_pose
     global x_lastest
-    global y_lastest 
+    global y_lastest
+    global drone_z
+
+    drone_z = msg.pose.position.z
 
     i = msg.pose.orientation.x
     j = msg.pose.orientation.y
     k = msg.pose.orientation.z
     r = msg.pose.orientation.w
-
-    R_d2m = [[1-2*(j*j + k*k), 2*(i*j - k*r), 2*(i*k + j*r)],
+    R_m2d = [[1-2*(j*j + k*k), 2*(i*j - k*r), 2*(i*k + j*r)],
            [2*(i*j + k*r), 1-2*(i*k + k*k), 2*(j*k - i*r)],
            [2*(i*k - j*r), 2*(j*k + i*r), 1-2*(i*i + j*j)]]
-
-    R_d2m = np.linalg.inv(R_d2m)
-
+    R_d2m = np.linalg.inv(R_m2d)
+    print(R_d2m)
     drone_orientation =[i,j,k,r]
+
     if x_lastest == None:
         x_lastest = msg.pose.position.x
         y_lastest = msg.pose.position.y
@@ -69,11 +93,12 @@ def d_pose_callback(msg):
     delta_x = msg.pose.position.x - x_lastest
     delta_y = msg.pose.position.y - y_lastest
 
-    drone_pose.header.stamp = rospy.Time.now()
+    # drone_pose.header.stamp = rospy.Time.now()
+    drone_pose.header.stamp = msg.header.stamp
     drone_pose.header.frame_id = "map"
     drone_pose.pose.position.x =  drone_pose.pose.position.x + delta_x
     drone_pose.pose.position.y = drone_pose.pose.position.y + delta_y
-    drone_pose.pose.position.z = msg.pose.position.x
+    drone_pose.pose.position.z = msg.pose.position.z
 
     drone_pose.pose.orientation.w = drone_orientation[3]
     drone_pose.pose.orientation.x = drone_orientation[0]
@@ -93,12 +118,13 @@ def d_pose_callback(msg):
 
 
 
-def pose_callback(msg):
+def measurement_callback(msg):
     global tf_buf
     global R_d2m
     global drone_orientation
     global arucos
     global drone_pose
+    global drone_z
 
     ###########################################################################
     # transform from camera_link to base_link, working fine!
@@ -120,20 +146,20 @@ def pose_callback(msg):
     aruco_id = msg.markers[0].id
     aruco_real_pose = arucos[aruco_id-1]
 
-    # i = aruco_relative_pose.orientation.x
-    # j = aruco_relative_pose.orientation.y
-    # k = aruco_relative_pose.orientation.z
-    # r = aruco_relative_pose.orientation.w
+    i = aruco_relative_pose.orientation.x
+    j = aruco_relative_pose.orientation.y
+    k = aruco_relative_pose.orientation.z
+    r = aruco_relative_pose.orientation.w
 
-    # tmp_sum = math.sqrt(i**2 + j**2 + k**2 + r**2)
-    # i = i/tmp_sum
-    # j = j/tmp_sum
-    # k = k/tmp_sum
-    # r = r/tmp_sum
+    tmp_sum = math.sqrt(i**2 + j**2 + k**2 + r**2)
+    i = i/tmp_sum
+    j = j/tmp_sum
+    k = k/tmp_sum
+    r = r/tmp_sum
 
-    # R_a2m = [[1-2*(j*j + k*k), 2*(i*j - k*r), 2*(i*k + j*r)],
-    #        [2*(i*j + k*r), 1-2*(i*k + k*k), 2*(j*k - i*r)],
-    #        [2*(i*k - j*r), 2*(j*k + i*r), 1-2*(i*i + j*j)]]
+    R_c2a = [[1-2*(j*j + k*k), 2*(i*j - k*r), 2*(i*k + j*r)],
+           [2*(i*j + k*r), 1-2*(i*k + k*k), 2*(j*k - i*r)],
+           [2*(i*k - j*r), 2*(j*k + i*r), 1-2*(i*i + j*j)]]
     # #No.8
     # R_a2m = [[0, 0, -1],[0.707, -0.707, 0],[-0.707, -0.707, 0]]
     # #No.15
@@ -163,11 +189,10 @@ def pose_callback(msg):
 
     # Should be of the type: PoseStamped
     drone_pose = PoseStamped()
-    drone_pose.header.stamp = rospy.Time.now()
+    # drone_pose.header.stamp = rospy.Time.now()
+    drone_pose.header.stamp = msg.header.stamp
     drone_pose.header.frame_id = "map"
-    drone_pose.pose.position.x = aruco_real_pose.pose.position.x + t_c2a_m[0] - t_d2c_m[0]
-    drone_pose.pose.position.y = aruco_real_pose.pose.position.y + t_c2a_m[1] - t_d2c_m[1]
-    drone_pose.pose.position.z = aruco_real_pose.pose.position.z - t_c2a_m[2] - t_d2c_m[2]
+
 
     drone_pose.pose.orientation.w = drone_orientation[3]
     drone_pose.pose.orientation.x = drone_orientation[0]
@@ -175,6 +200,16 @@ def pose_callback(msg):
     drone_pose.pose.orientation.z = drone_orientation[2]
 
     position_estimated.publish(drone_pose)
+
+    # better confirm the detected orientation of aruco markers first!
+    R_d2m = np.dot(R_d2c,np.dot(R_c2a,R_a2m))
+    R_m2d = np.linalg.inv(R_d2d)
+
+
+    drone_pose.pose.position.x = aruco_real_pose.pose.position.x + t_c2a_m[0] - t_d2c_m[0]
+    drone_pose.pose.position.y = aruco_real_pose.pose.position.y + t_c2a_m[1] - t_d2c_m[1]
+    # drone_pose.pose.position.z = aruco_real_pose.pose.position.z + t_c2a_m[2] - t_d2c_m[2]
+    drone_pose.pose.position.z = drone_z
 
     # print("POSE")
     # print(drone_pose.pose.position.x)
@@ -233,15 +268,14 @@ def pose_callback(msg):
 
 
 rospy.init_node('measurement_from_aruco')
-rate = rospy.Rate(10000)  # Hz
+rate = rospy.Rate(1000)  # Hz
+position_estimated  = rospy.Publisher('/localization', PoseStamped)
 
-drone_pose_origin = rospy.Subscriber('/cf1/pose', PoseStamped, d_pose_callback)
-position_estimated  = rospy.Publisher('/localization', PoseStamped, queue_size=2)
+
+
 
 def main():
     global tf_buf 
-
-    
 
     # tf from base_link to camera_link only valid for simulation! 
     tfpb = tf2_ros.StaticTransformBroadcaster()
@@ -266,8 +300,8 @@ def main():
     tf_lstn  = tf2_ros.TransformListener(tf_buf)
     ############################################
 
-    drone_pose_origin = rospy.Subscriber('/cf1/pose', PoseStamped, d_pose_callback)
-    marker_detection = rospy.Subscriber('/aruco/markers', MarkerArray, pose_callback)
+    drone_pose_origin = rospy.Subscriber('/cf1/pose', PoseStamped, predict_callback)
+    marker_detection = rospy.Subscriber('/aruco/markers', MarkerArray, measurement_callback)
 
     # position_cmd.publish(drone_pose)
 
