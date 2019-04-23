@@ -5,21 +5,21 @@ from matplotlib import pyplot as plt
 # restore the signs into the template list 
 templates = []
 
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/airport.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/dangerous_curve_left.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/dangerous_curve_right.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/follow_left.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/follow_right.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/junction.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/no_bicycle.png',1))
-# templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/no_heavy_truck.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/no_parking.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/no_stopping_and_parking.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/residential.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/road_narrows_from_left.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/road_narrows_from_right.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/roundabout_warning.png',1))
-templates.append(cv2.imread('/home/tianze/dd2419_ws/src/dd2419_perception_training/signs/template/stop.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/airport.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/dangerous_curve_left.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/dangerous_curve_right.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/follow_left.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/follow_right.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/junction.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/no_bicycle.png',1))
+# templates.append(cv2.imread('/home/robot/dd2419_ws/src/dd2419_perception_training/signs/template/no_heavy_truck.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/no_parking.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/no_stopping_and_parking.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/residential.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/road_narrows_from_left.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/road_narrows_from_right.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/roundabout_warning.png',1))
+templates.append(cv2.imread('/home/robot/dd2419_ws/src/pras_project/scripts/cv/dd2419_perception_training/signs/template/stop.png',1))
 
 # change the size and resolution of the templates to mka them more similar to the real detected ones
 # could change this part

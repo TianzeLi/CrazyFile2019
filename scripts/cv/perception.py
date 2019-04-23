@@ -21,8 +21,17 @@ import idSign
 import pose_tf
 
 # Virtual bash
+# roscore
+
 # cd ~/dd2419_ws/src/dd2419_perception_training/bags
+# rosbag play -r 0.5 long.bag
+
 # cd ~/dd2419_ws/src/pras_project/scripts/cv
+# python perception.py
+
+
+
+
 
 
 class image_converter:
