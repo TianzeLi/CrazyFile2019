@@ -30,6 +30,17 @@ singelModel._make_predict_function()
 
 bridge = CvBridge()
 
+#TODO: Clustering and determine position of sign in world
+# Positioning
+#   - 
+# Save all positions to temporary CSV file
+# Postprocess with clustering (cv2.solvePnp)
+# Later on if time:
+#   - Improve post processeing by removing the background aka making it white
+#       * Use black background
+#       * Put contour
+#       * Make background white
+
 class signDetector:
     def __init__(self, image):
         self.img = image
@@ -51,16 +62,17 @@ class signDetector:
 
         # **DETECT EDGES AND CONTOURS**
         # canny edge detection
-        edgesDetected = cv2.Canny(imageBlurred, 10, 30, 3)
+        edgesDetected = cv2.Canny(imageBlurred, 10, 3, 3)
         publishImage(edgesDetected, 'canny')
         # find contours
         edges = edgesDetected.copy()
         contours = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
         #contours = imutils.grab_contours(contours) 
         # OBS DIFFERENCE: [-2] at end of findContours and no grab_contours
-        contour_img = cv2.drawContours(image, contours, -1, (0,255,0), 2)
-        publishImage(contour_img, 'contours')
+        #contour_img = cv2.drawContours(image, contours, -1, (0,255,0), 2)
+        #publishImage(contour_img, 'contours')
 
+        imageContours = image.copy()
         if len(contours) > 0:
             for cnt in contours:
                 # Area restrictor
@@ -117,7 +129,11 @@ class signDetector:
                 publishImage(imageWarped, 'warp')
                 
                 classifiedSign = self.classifySign(imageWarped)
-                
+                cv2.drawContours(imageContours, [box], -1, (0, 255, 9), 2) # draw box
+                cv2.putText(imageContours, classifiedSign, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+        publishImage(imageContours, 'imageWithBoxes')
+
                 
     def classifySign(self, image):
         print('IM CLASSIFYING!!! YAYA')
