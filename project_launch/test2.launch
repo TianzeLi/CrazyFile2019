@@ -12,18 +12,23 @@
       type="static_transform_publisher"
       args="$0 0 0 0 0 0 map cf1/odom"/>
 
-<node type="rviz"
-      name="rviz"
-      pkg="rviz"
-      args="-d $(find pras_project)/rviz/crazy_flie.rviz" />
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie2.urdf.xacro" />
 
-<!--<node name="aruco_md"
-      pkg="dd2419_simulation"
-      type="arucomd"/> -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+  <node name="rviz" pkg="rviz" type="rviz" />
+
+<node pkg="pras_project" type="occupancy_grid" name="occupancy_grid" />
+<node pkg="pras_project" type="crazyflie_pub" name="crazyflie_pub" />
+
+<node name="trajectory_planner" pkg="pras_project" type="trajectory_planner.py">
+  <remap from="grid_map" to="map"/>
+</node>
 
 
-<!-- <node name="task3"
-      pkg="cf_first_flight"
-      type="task3"/> -->
+<node pkg="pras_project" type="simple_localization.py" name="measurement_from_aruco" />
+
 
 </launch>

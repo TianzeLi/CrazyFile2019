@@ -173,7 +173,6 @@ class map_grid:
 			#		print '{:4}'.format(self.img[i][j]),
 			#	print
 			p += 1
-		plt.show()
 		self.publish_map()
 
 	def coord_to_indices(self, x, y):
