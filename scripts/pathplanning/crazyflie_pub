@@ -68,15 +68,15 @@ def publish_cmd(goal):
     # goal_odom.pose.orientation.x = goal_odom.pose.position.x 
     # goal_odom.pose.orientation.y = goal_odom.pose.position.y 
 
-    cmd.x = goal_odom.pose.position.x + drone_pose.pose.position.x - drone_origin_x
-    cmd.y = goal_odom.pose.position.y + drone_pose.pose.position.y - drone_origin_y
+    cmd.x = goal_odom.pose.position.x - drone_pose.pose.position.x + drone_origin_x
+    cmd.y = goal_odom.pose.position.y - drone_pose.pose.position.y + drone_origin_y
     cmd.z = goal_odom.pose.position.z
 
 
     roll, pitch, yaw = euler_from_quaternion((goal_odom.pose.orientation.x,
                                               goal_odom.pose.orientation.y,
-                                              goal_odom.pose.orientation.z  + drone_pose.pose.orientation.z - drone_origin_oz,
-                                              goal_odom.pose.orientation.w + drone_pose.pose.orientation.w - drone_origin_ow))
+                                              goal_odom.pose.orientation.z - drone_pose.pose.orientation.z + drone_origin_oz,
+                                              goal_odom.pose.orientation.w - drone_pose.pose.orientation.w + drone_origin_ow))
 
     cmd.yaw = math.degrees(yaw)
 
