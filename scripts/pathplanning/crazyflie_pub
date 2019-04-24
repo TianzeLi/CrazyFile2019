@@ -16,6 +16,9 @@ goal = None
 
 drone_origin_x = 0
 drone_origin_y = 0
+drone_origin_oz = 0
+drone_origin_ow = 0
+
 # drone_pose = None
 
 
@@ -43,6 +46,11 @@ def goal_callback(msg):
 
 def publish_cmd(goal):
     global drone_pose
+    global drone_origin_x
+    global drone_origin_y
+    global drone_origin_oz
+    global drone_origin_ow
+
     # Need to tell TF that the goal was just generated
     goal.header.stamp = rospy.Time.now()
 
@@ -67,8 +75,8 @@ def publish_cmd(goal):
 
     roll, pitch, yaw = euler_from_quaternion((goal_odom.pose.orientation.x,
                                               goal_odom.pose.orientation.y,
-                                              goal_odom.pose.orientation.z,
-                                              goal_odom.pose.orientation.w))
+                                              goal_odom.pose.orientation.z  + drone_pose.pose.orientation.z - drone_origin_oz,
+                                              goal_odom.pose.orientation.w + drone_pose.pose.orientation.w - drone_origin_ow))
 
     cmd.yaw = math.degrees(yaw)
 
