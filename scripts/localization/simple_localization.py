@@ -105,12 +105,8 @@ def measurement_callback(msg):
     t_c2d_y = 0.0
     t_c2d_z = 0.02
 
-    Ry_c2d = [[0,0,1.0],[0,1.0,0],[-1.0,0,0]]
-    Rz_c2d = [[0,1.0,0],[-1.0,0,0],[0,0,1.0]]
-
-    R_d2c = np.linalg.inv(np.dot(Rz_c2d, Ry_c2d))
     tmp_t2 = [[t_c2d_x],[t_c2d_y],[t_c2d_z]]
-    t_d2c_m = np.dot(np.linalg.inv(R_d2m), tmp_t2)
+    t_d2c_m = np.dot(R_d2m, tmp_t2)
     ###########################################################################
     # aruco pose respective to carema_link 
     aruco_relative_pose = msg.markers[0].pose.pose
@@ -232,8 +228,8 @@ def measurement_callback(msg):
 
 
 rospy.init_node('measurement_from_aruco')
-rate = rospy.Rate(30)  # Hz
-position_estimated  = rospy.Publisher('/localization', PoseStamped, queue_size = 1)
+rate = rospy.Rate(10)  # Hz
+position_estimated  = rospy.Publisher('/localization', PoseStamped, queue_size = 3)
 
 def main():
     global tf_buf 
