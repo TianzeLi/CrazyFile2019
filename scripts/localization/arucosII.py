@@ -225,7 +225,7 @@ Rlist.append([[-1, 0, 0],[0, -1, 0],[0, 0, 1]])
 
 # Original content in the json file
 # euler angle in orientation???
-"markers": [
+# "markers": [
     # {"id": 1, "pose": {"position": [-2.50, -0.75, 0.10], "orientation": [  0.0, -90.0,  180.0]}},
     # {"id": 2, "pose": {"position": [-3.00,  1.50, 0.10], "orientation": [  0.0, -90.0,   90.0]}},
     # {"id": 3, "pose": {"position": [-1.00,  1.25, 0.10], "orientation": [  0.0, -90.0,    0.0]}},
