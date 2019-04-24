@@ -18,19 +18,19 @@ class Map:
     def get_by_index(self, i, j):
         if not self.are_indices_in_range(i, j):
             raise IndexError()
-        return self.map.data[i*self.width + j]
+        return self.map.data[j*self.width + i] #swapped i and j
 
-    # i is for row (y), j is for col (x)
+    # i is for row (x), j is for col (y)
     def get_by_coord(self, x, y):
         return self.get_by_index(*self.coord_to_indices(x, y))
 
-    def coord_to_indices(self, x, y):
-        i = int((y - self.origin.y) / self.resolution)
-        j = int((x - self.origin.x) / self.resolution)
+    def coord_to_indices(self, x, y):#swapped i and j
+        j = int((y - self.origin.y) / self.resolution) 
+        i = int((x - self.origin.x) / self.resolution)
         return (i, j)
 
-    def are_indices_in_range(self, i, j):
-        return 0 <= i < self.height and 0 <= j < self.width
+    def are_indices_in_range(self, i, j):#swapped i and j
+        return 0 <= j < self.height and 0 <= i < self.width
 
     def is_allowed(self, state, robot):
         was_error = False
