@@ -20,7 +20,7 @@ from geometry_msgs.msg import PoseStamped, TransformStamped, Vector3
 # from crazyflie_driver.msg import Position
 from aruco_msgs.msg import MarkerArray
 import tf
-from arucos import arucos, Rlist
+from arucosII import arucos, Rlist
 
 
 #########################################
@@ -130,12 +130,6 @@ def measurement_callback(msg):
     # print('\n\n')
     
 
-    # r = math.sqrt(1.05 + R_a2m_e[0][0] + R_a2m_e[1][1] + R_a2m_e[2][2]) /2
-    # i = (R_a2m_e[2][1] - R_a2m_e[1][2])/( 4 *r)
-    # j = (R_a2m_e[0][2] - R_a2m_e[2][0])/( 4 *r)
-    # k = (R_a2m_e[1][0] - R_a2m_e[0][1])/( 4 *r)
-    # print(euler_from_quaternion([i,j,k,r],'sxyz'))
-
     # R_c2a = np.dot(np.dot(Rz_c2d, Ry_c2d),np.dot(R_d2m,np.linalg.inv(R_a2m)))
     t_a2c = [[aruco_relative_pose.position.x],
              [aruco_relative_pose.position.y], 
@@ -192,23 +186,6 @@ def measurement_callback(msg):
     drone_pose.pose.position.z = drone_z
 
     print(drone_pose)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -321,3 +298,12 @@ if __name__ == '__main__':
 # q2[3] = current_pose.pose.orientation.w
  
 # qr = tf.transformations.quaternion_multiply(q2, q1_inv)
+
+
+
+# Codes for reference
+    # r = math.sqrt(1.05 + R_a2m_e[0][0] + R_a2m_e[1][1] + R_a2m_e[2][2]) /2
+    # i = (R_a2m_e[2][1] - R_a2m_e[1][2])/( 4 *r)
+    # j = (R_a2m_e[0][2] - R_a2m_e[2][0])/( 4 *r)
+    # k = (R_a2m_e[1][0] - R_a2m_e[0][1])/( 4 *r)
+    # print(euler_from_quaternion([i,j,k,r],'sxyz'))
