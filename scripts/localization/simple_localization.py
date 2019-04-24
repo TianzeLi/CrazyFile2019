@@ -232,7 +232,7 @@ def measurement_callback(msg):
 
 
 rospy.init_node('measurement_from_aruco')
-rate = rospy.Rate(100)  # Hz
+rate = rospy.Rate(30)  # Hz
 position_estimated  = rospy.Publisher('/localization', PoseStamped, queue_size = 1)
 
 def main():
