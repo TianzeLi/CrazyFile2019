@@ -26,6 +26,7 @@ from keras.models import load_model, Sequential
 
 modelFolder = '/home/robot/dd2419_ws/src/pras_project/scripts/cv/NN_models/'
 singelModel = load_model(modelFolder + 'Single' + '8' + '.h5')
+singelModel._make_predict_function()
 
 bridge = CvBridge()
 
@@ -88,9 +89,9 @@ class signDetector:
                 # Check color content of warped image
                 colorContent = self.checkColors(imageWarped) #[Blue, Red, Yellow]
                 maxColorContent = np.amax(colorContent)
-                print(maxColorContent)
+                #print(maxColorContent)
                 if maxColorContent < 0.05:
-                    print("NOT ENOGH COLORS FFS")
+                    #print("NOT ENOGH COLORS FFS")
                     continue
 
                 # Control shape of contour
@@ -115,13 +116,36 @@ class signDetector:
                 #Draw contour on image and classify using NN:
                 publishImage(imageWarped, 'warp')
                 
-                classifiedSign = self.classifySign(image, shape)
+                classifiedSign = self.classifySign(imageWarped)
                 
                 
-    def classifySign(self, image, shape):
+    def classifySign(self, image):
+        print('IM CLASSIFYING!!! YAYA')
         model = singelModel
-        classNames = []
+        classNames = ['airport', 
+                        'dangerous_curve_left',
+                        'dangerous_curve_right',
+                        'follow_left',
+                        'follow_right',
+                        'junction',
+                        'no_bicycle',
+                        'no_heavy_truck',
+                        'no_parking',
+                        'no_stopping_and_parking',
+                        'residential',
+                        'road_narrows_from_left',
+                        'road_narrows_from_right',
+                        'roundabout_warning',
+                        'stop',
+                        'z_crap']
+        imageRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        imageExpand = np.expand_dims(np.array(imageRGB), 0)
+        predict = model.predict(imageExpand)
+        signPredictedPos = np.where(predict == np.amax(predict))[1][0]
+        signPredicted = classNames[signPredictedPos]
+        return signPredicted
 
+        
 
     def determineContourShape(self, cnt):
         area = cv2.contourArea(cnt)
@@ -210,7 +234,7 @@ class signDetector:
         # Resize for NN classification
         classificationDim = (64, 64)
         imageWarped = cv2.resize(warp, classificationDim, interpolation = cv2.INTER_LANCZOS4)
-        print("warp")
+        #print("warp")
         return imageWarped
 
 
@@ -241,7 +265,10 @@ def main(args):
     # TODO:
     # Add code so that we only look at every 4th image
 
-    img_sub = rospy.Subscriber("/cf1/camera/image_raw", Image,imageCallback)
+    #img_sub = rospy.Subscriber("/cf1/camera/image_raw", Image,imageCallback)
+    img_sub = rospy.Subscriber("/cf1/camera/image_raw/decompressed", Image,imageCallback)
+    
+
     # publish the masked image with first contour extraction
     contour_image_pub = rospy.Publisher("/contourimage", Image, queue_size=2)
 

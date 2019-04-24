@@ -3,7 +3,7 @@
 <node type="rviz"
       name="rviz"
       pkg="rviz"
-      args="-d $(find perc_ch1)/rviz/perc_ch.rviz" />
+       />
 
 <node name="republish"
       type="republish"
@@ -15,15 +15,15 @@
       name="tf2"
       args="0 0 0 0 0 0 map cf1/odom"/>
 
-<node name="true_sign_tf_pub"
-      pkg="perc_ch1"
+<!--<node name="true_sign_tf_pub"
+      pkg="pras_project"
       type="pubpose.py"
-      args="$(find perc_ch1)/data/poses.txt"/>
+      args="$(find pras_project)/data/poses.txt"/> -->
 
 <node name="loop_rosbag"
       pkg="rosbag"
       type="play"
-      args = "-l $(find perc_ch1)/bags/long.bag"/>
+      args = "-l $(find pras_project)/bags/long.bag"/>
       <!-- args= "-l /home/robot/sign_training_bags/bags/long_general_sunlight.bag"/> -->
       <!-- args= "-l $(find perc_ch1)/bags/long.bag"/> -->
 

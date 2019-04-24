@@ -28,6 +28,18 @@ class State:
         new_state.theta = yaw
         return new_state
 
+#Distance between 2 states
+    def sdistance(d1,d2):
+        dx = d1.x - d2.x
+        dy = d1.y - d2.y
+        return(dx**2 + dy**2)**0.5
+
+    def sangle(d1,d2):
+        dtheta = d1.theta - d2.theta
+        return dtheta
+
+
+
     def dist_to(self, o_s):
         return ((self.x - o_s.x)**2 + (self.y - o_s.y)**2)**0.5
 
