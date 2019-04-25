@@ -107,7 +107,7 @@ class TrajectoryPlanner:
             self.start = final_state #test
             rospy.loginfo("final goal is the next start point") #test
             while True:
-            	if State.sdistance(State.from_pose(dr_pose.pose),final_state)<0.07 and State.sangle(State.from_pose(dr_pose.pose),final_state)<0.07:
+            	if State.sdistance(State.from_pose(dr_pose.pose),final_state)<0.06 and State.sangle(State.from_pose(dr_pose.pose),final_state)<0.06:
             		break
             if k == 1:
 	        	posemsg.pose.position.x = 2
