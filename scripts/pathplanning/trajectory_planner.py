@@ -37,7 +37,7 @@ class TrajectoryPlanner:
         self.map_subscriber = rospy.Subscriber("map", OccupancyGrid, self.new_map_callback)
         self.start_subscriber = rospy.Subscriber("initialpose", PoseWithCovarianceStamped, self.new_start_callback)
         self.goal_subscriber = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.new_goal_callback)
-        self.drone_subscriber = rospy.Subscriber("/cf1/pose", PoseStamped, self.pose_callback)
+        self.local_subscriber = rospy.Subscriber("/localization", PoseStamped, self.local_callback)
 
         self.path_publisher = rospy.Publisher("trajectory", MarkerArray, queue_size=3)
         self.pose_publisher = rospy.Publisher("debug_pose", PoseStamped, queue_size=3)
@@ -45,7 +45,7 @@ class TrajectoryPlanner:
         # what will be there. A module goes into variable. Isn't it too much memory consumption. Maybe I should assign function replan() to this variable?
         self.planner = planners.astar.replan
 
-    def pose_callback(self, d_pose):
+    def local_callback(self, d_pose):
     	global dr_pose
     	dr_pose = d_pose
 
@@ -107,7 +107,7 @@ class TrajectoryPlanner:
             self.start = final_state #test
             rospy.loginfo("final goal is the next start point") #test
             while True:
-            	if State.sdistance(State.from_pose(dr_pose.pose),final_state)<0.015 and State.sangle(State.from_pose(dr_pose.pose),final_state)<0.06:
+            	if State.sdistance(State.from_pose(dr_pose.pose),final_state)<0.07 and State.sangle(State.from_pose(dr_pose.pose),final_state)<0.07:
             		break
             if k == 1:
 	        	posemsg.pose.position.x = 2
