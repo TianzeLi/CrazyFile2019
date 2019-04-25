@@ -27,6 +27,10 @@
       <!-- args= "-l /home/robot/sign_training_bags/bags/long_general_sunlight.bag"/> -->
       <!-- args= "-l $(find perc_ch1)/bags/long.bag"/> -->
 
+<node name = "rosbag_tf" 
+      pkg = "pras_project"
+      type = "rosbag_tf" />
+
 
 
 

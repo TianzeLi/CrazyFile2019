@@ -15,7 +15,8 @@ from cv_bridge import CvBridge, CvBridgeError
 from transform import four_point_transform
 from matplotlib import pyplot as plt
 
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped, Quaternion
+from tf.transformations import quaternion_from_euler
 
 # Self-written functions
 import idSign
@@ -25,13 +26,14 @@ import pose_tf
 from keras.models import load_model, Sequential
 
 # Import positioning
-import positioning
+#from positioning import Positioning
 
 modelFolder = '/home/robot/dd2419_ws/src/pras_project/scripts/cv/NN_models/'
 singelModel = load_model(modelFolder + 'Single' + '8' + '.h5')
 singelModel._make_predict_function()
 
 bridge = CvBridge()
+deg2rad = math.pi/180
 
 #TODO: Clustering and determine position of sign in world
 # Positioning
@@ -48,6 +50,7 @@ class signDetector:
     def __init__(self, image):
         self.img = image
         self.mainDetector(image)
+        #self.positioner = Positioning()
 
     def mainDetector(self, img):
         # **PREPROCESS IMAGE***
@@ -76,6 +79,7 @@ class signDetector:
         #publishImage(contour_img, 'contours')
 
         imageContours = image.copy()
+        #positioner = Positioning()
         if len(contours) > 0:
             for cnt in contours:
                 # Area restrictor
@@ -137,10 +141,16 @@ class signDetector:
                 pose = PoseStamped()
                 timeStamp = rospy.Time.now()
                  
-                tfMap = findPosition(positioning ,center, box, timeStamp)
+                #tfMap = positioner.find_location(center, box, timeStamp)
+                self.positionSign(shape, box, classifiedSign)
+                #print(tfMap)
+                #if tfMap != None:
+                    #print([classifiedSign, tfMap.pose.position.x])
+                # Can print
         publishImage(imageContours, 'imageWithBoxes')
 
-                
+        
+    
     def classifySign(self, image):
         print('IM CLASSIFYING!!! YAYA')
         model = singelModel
@@ -204,7 +214,7 @@ class signDetector:
 
 
     def checkColors(self, image):
-        print("Checking colors")
+        #print("Checking colors")
         width, height = image.shape[:2]
         area = width*height
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -259,6 +269,58 @@ class signDetector:
         #print("warp")
         return imageWarped
 
+    def positionSign(self, shape, box, sign):
+        cameraMatrix = np.array(
+                [[231.250001, 0.000000, 320.519378],
+                [0.0000000, 231.06552, 240.631482],
+                [0.0000000, 0.000000, 1.0000000]])
+        distortionCoefficients = np.array([0.061687, -0.049761, -0.008166, 0.004284, 0.0])
+            
+        if shape == 'circle':
+            signWitdh = 0.2
+            signHeight = 0.2
+        elif shape == 'triangle':
+            signWitdh = 0.2
+            signHeight = 0.18
+        elif shape == 'rectangle':
+            signWitdh = 0.2
+            signHeight = 0.145
+
+        objectPoints = np.array([
+                                    (-signWitdh/2, signHeight/2, 0), # top left
+                                    (signWitdh/2, signHeight/2, 0), # top right
+                                    (-signWitdh/2, -signHeight/2, 0), # lower left
+                                    (signWitdh/2, -signHeight/2, 0)  # lower right
+
+                                ])
+
+        imagePoints = np.float32(box)
+
+        (success, rotation_vector, translation_vector) = cv2.solvePnP(objectPoints, imagePoints, cameraMatrix, distortionCoefficients)
+
+        if success:
+            broadcaster = tf2_ros.StaticTransformBroadcaster()
+            t = PoseStamped()
+            t.header.frame_id = 'cf1/camera'
+            t.header.stamp = rospy.Time()
+            trans = tf_buf.transform(t,'cf1/odom')
+
+            t.pose.position.x = translation_vector[0][0]
+            t.pose.position.y = translation_vector[1][0]
+            t.pose.position.z = translation_vector[2][0]
+
+            (t.pose.orientation.x, 
+            t.pose.orientation.y, 
+            t.pose.orientation.z, 
+            t.pose.orientation.w)  = quaternion_from_euler(rotation_vector[0], rotation_vector[1], rotation_vector[2])
+            
+            tOut = TransformStamped()
+            tOut.header.frame_id = 'cf1/map'
+            tOut.child_frame_id = 'cf1/' + sign
+            tOut.transform.translation = trans.pose.position
+            tOut.transform.rotation = trans.pose.orientation
+
+            broadcaster.sendTransform(tOut)
 
 def imageCallback(data):
     try:
@@ -280,16 +342,47 @@ def publishImage(image, name):
             imgPub.publish(bridge.cv2_to_imgmsg(image, "bgr8"))
     except CvBridgeError as e:
         print(e)
-    
+
+
+def poseCallback(data):
+    poseOfDrone = data
+    broadcaster = tf2_ros.TransformBroadcaster()
+    t = TransformStamped()
+    t.header.frame_id = 'cf1/odom'
+    t.child_frame_id = 'cf1/base_link'
+    t.header.stamp = rospy.Time.now()
+    t.transform.translation = poseOfDrone.pose.position
+    t.transform.rotation = poseOfDrone.pose.orientation
+    broadcaster.sendTransform(t)
+
+    # Camera link to Base link
+    tf_c2b = TransformStamped()
+    tf_c2b.header.frame_id = 'cf1/base_link'
+    tf_c2b.header.stamp = rospy.Time.now()
+    tf_c2b.child_frame_id = 'cf1/camera'
+    tf_c2b.transform.translation.x = 0.01
+    tf_c2b.transform.translation.y = 0
+    tf_c2b.transform.translation.z = 0.02
+    (tf_c2b.transform.rotation.x,
+    tf_c2b.transform.rotation.y,
+    tf_c2b.transform.rotation.z,
+    tf_c2b.transform.rotation.w) = quaternion_from_euler(90*deg2rad, 180*deg2rad, 90*deg2rad) #roll, pitch, yaw
+    broadcaster.sendTransform(tf_c2b)
+
+
+
+
 
 rospy.init_node('perception2', anonymous=True)
+tf_buf   = tf2_ros.Buffer()
+tf_lstn  = tf2_ros.TransformListener(tf_buf)
 def main(args):
     # TODO:
     # Add code so that we only look at every 4th image
 
     #img_sub = rospy.Subscriber("/cf1/camera/image_raw", Image,imageCallback)
     img_sub = rospy.Subscriber("/cf1/camera/image_raw/decompressed", Image,imageCallback)
-    
+    pose_sub = rospy.Subscriber("/cf1/pose", PoseStamped, poseCallback)
 
     # publish the masked image with first contour extraction
     contour_image_pub = rospy.Publisher("/contourimage", Image, queue_size=2)

@@ -8,7 +8,7 @@ import tf2_geometry_msgs
 from geometry_msgs.msg import PoseStamped
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-class positioning:
+class Positioning:
     """
     Localizer provides the function used to localize a detected object in the map frame.
     It has to be instantiated once when the node is created (i.e. not everytime the callback
@@ -75,7 +75,7 @@ class positioning:
         tvec = []
         (success, rotation_vector, translation_vector) = cv2.solvePnP(self.template_points, imgPoints, self.camera_matrix, self.distortion_model)
         #rospy.loginfo("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
-
+        
         # Build PoseStamped of the object and transform it to the map frame
         pose = PoseStamped()
         pose.header.frame_id = "cf1/camera_link"
@@ -89,4 +89,4 @@ class positioning:
         pose.pose.orientation.z, 
         pose.pose.orientation.w)  = quaternion_from_euler(rotation_vector[0], rotation_vector[1], rotation_vector[2])
         return self.tf_buf.transform(pose, 'map') # returns the sign pose in "map" frame
-
+    

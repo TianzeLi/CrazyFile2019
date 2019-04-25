@@ -74,7 +74,6 @@ class DetectorFull:
 
         imgWithCnts = img.copy()
         for c in cnts:
-
             #Convex contour stopper:
             peri = cv2.arcLength(c, True)
             area = cv2.contourArea(c)
@@ -154,8 +153,6 @@ class DetectorFull:
             shape='none'
         else:
             shape = shapeList[mi]
-
-
 
         return shape
 
@@ -252,7 +249,7 @@ class DetectorFull:
                 diff = 7
                 lower = np.array([mid-diff,70,70])
                 upper = np.array([mid+diff,255,255])
-            #Apply mask:
+            # Apply mask:
             if color == 'red':
                 mask1 = cv2.inRange(hsv, lower1, upper1)
                 mask2 = cv2.inRange(hsv, lower2, upper2)
@@ -266,8 +263,6 @@ class DetectorFull:
                 # Threshold the HSV image to get only the pixels in range
                 mask = cv2.inRange(hsv, lower, upper)
                 masked = cv2.bitwise_and(img, img, mask= mask)
-
-
 
             # convert the resized image to grayscale and threshold it
             gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
