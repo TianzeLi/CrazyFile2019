@@ -14,6 +14,7 @@ from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
 from transform import four_point_transform
 from matplotlib import pyplot as plt
+import csv
 
 from geometry_msgs.msg import PoseStamped, TransformStamped, Quaternion
 from tf.transformations import quaternion_from_euler
@@ -295,7 +296,7 @@ class signDetector:
                                 ])
 
         #imagePoints = np.float32(box)
-        """
+        
         imagePoints = np.zeros((4, 2), dtype="float32")
         # the top-left point will have the smallest sum, whereas
         # the bottom-right point will have the largest sum
@@ -309,22 +310,23 @@ class signDetector:
         diff = np.diff(box, axis=1)
         imagePoints[1] = box[np.argmin(diff)]
         imagePoints[3] = box[np.argmax(diff)]
-        """
-
         
+
+        """
         imagePoints = np.array([
                                 (box[0][0]  , box[0][1]), # 1st point
                                 (box[1][0]  , box[1][1]), # 2nd point
                                 (box[2][0]  , box[2][1]), # 3rd point
                                 (box[3][0]  , box[3][1])  # 4rth point
                             ], dtype = "double")
+        """
         
 
 
 
         (success, rotation_vector, translation_vector) = cv2.solvePnP(objectPoints, imagePoints, cameraMatrix, distortionCoefficients)
 
-        if success:
+        if success and sign != 'z_crap':
             broadcaster = tf2_ros.StaticTransformBroadcaster()
             t = PoseStamped()
             t.header.frame_id = 'cf1/camera'
@@ -334,8 +336,7 @@ class signDetector:
             t.pose.position.x = translation_vector[0][0]
             t.pose.position.y = translation_vector[1][0]
             t.pose.position.z = translation_vector[2][0]
-            if sign != 'z_crap':
-                print([sign, t.pose.position.x, t.pose.position.y, t.pose.position.z])
+            print([sign, t.pose.position.x, t.pose.position.y, t.pose.position.z])
 
             (t.pose.orientation.x, 
             t.pose.orientation.y, 
@@ -346,12 +347,26 @@ class signDetector:
             trans = tf_buf.transform(t,'cf1/odom')
             # rosbag.duration(0.5)
             tOut = TransformStamped()
-            tOut.header.frame_id = 'cf1/map'
+            tOut.header.frame_id = 'map'
             tOut.child_frame_id = 'cf1/' + sign
             tOut.transform.translation = trans.pose.position
             tOut.transform.rotation = trans.pose.orientation
 
             broadcaster.sendTransform(tOut)
+
+            #TODO: Build a matrix(or write to csv file instantly) with class names and positions
+            # Then use this for clustering.
+
+    def writeRowToCSV(fileName, sign, position):
+
+        with open(fileName+'.csv', mode='w') as csvFile:
+            csvWriter = csv.writer(csvFile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+            csvWriter.writerow([sign, position])
+
+
+
+        
 
 def imageCallback(data):
     try:
