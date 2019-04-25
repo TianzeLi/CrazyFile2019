@@ -7,7 +7,7 @@
 # cd dd2419_ws/src/pras_project/scripts/localization/
 # python simple_localization.py 
 
-# Current problem: 
+# Current problem:
 
 import math
 import numpy as np
@@ -171,6 +171,12 @@ def measurement_callback(msg):
     drone_pose.pose.orientation.x = qx
     drone_pose.pose.orientation.y = qy
     drone_pose.pose.orientation.z = qz
+    tmp_sum = math.sqrt(qw*qw + qx*qx + qy*qy + qz*qz)
+    qw = qw/tmp_sum
+    qx = qx/tmp_sum
+    qy = qy/tmp_sum
+    qz = qz/tmp_sum
+
     position_estimated.publish(drone_pose)
 
     # # better confirm the detected orientation of aruco markers first!
@@ -227,7 +233,7 @@ def main():
      t.transform.rotation.w) = quaternion_from_euler(math.radians(0),
                                                      math.radians(90),
                                                      math.radians(-90),'rzyz')
-    tfpb.sendTransform(t)
+    # tfpb.sendTransform(t)
     ############################################
     tf_buf   = tf2_ros.Buffer()
     tf_lstn  = tf2_ros.TransformListener(tf_buf)

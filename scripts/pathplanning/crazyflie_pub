@@ -72,11 +72,21 @@ def publish_cmd(goal):
     cmd.y = goal_odom.pose.position.y - drone_pose.pose.position.y + drone_origin_y
     cmd.z = goal_odom.pose.position.z
 
+    # Be careful with the radius and degree and region
+    # goal_angle = 2*math.acos(goal_odom.pose.orientation.w) #+ math.asin(goal_odom.pose.orientation.z)
+    estimated_angle = 2*math.acos(drone_pose.pose.orientation.w) #+ math.asin(drone_pose.pose.orientation.z)
+    odo_angle = 2*math.acos(drone_origin_ow) #+ math.asin(drone_origin_oz)
+
+    # goal_angle = goal_angle + odo_angle - estimated_angle
+
+    # goal_odom.pose.orientation.z = math.sin(goal_angle/2)
+    # goal_odom.pose.orientation.w = math.cos(goal_angle/2)    
 
     roll, pitch, yaw = euler_from_quaternion((goal_odom.pose.orientation.x,
                                               goal_odom.pose.orientation.y,
-                                              goal_odom.pose.orientation.z - drone_pose.pose.orientation.z + drone_origin_oz,
-                                              goal_odom.pose.orientation.w - drone_pose.pose.orientation.w + drone_origin_ow))
+                                              goal_odom.pose.orientation.z,
+                                              goal_odom.pose.orientation.w))
+    yaw = yaw + odo_angle - estimated_angle
 
     cmd.yaw = math.degrees(yaw)
 
