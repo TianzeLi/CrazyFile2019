@@ -8,7 +8,7 @@ import tf2_geometry_msgs
 from geometry_msgs.msg import PoseStamped
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-class Localizer:
+class positioning:
     """
     Localizer provides the function used to localize a detected object in the map frame.
     It has to be instantiated once when the node is created (i.e. not everytime the callback

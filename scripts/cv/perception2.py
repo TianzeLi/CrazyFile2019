@@ -24,6 +24,9 @@ import pose_tf
 # Keras tensorflow
 from keras.models import load_model, Sequential
 
+# Import positioning
+import positioning
+
 modelFolder = '/home/robot/dd2419_ws/src/pras_project/scripts/cv/NN_models/'
 singelModel = load_model(modelFolder + 'Single' + '8' + '.h5')
 singelModel._make_predict_function()
@@ -131,7 +134,10 @@ class signDetector:
                 classifiedSign = self.classifySign(imageWarped)
                 cv2.drawContours(imageContours, [box], -1, (0, 255, 9), 2) # draw box
                 cv2.putText(imageContours, classifiedSign, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
+                pose = PoseStamped()
+                timeStamp = rospy.Time.now()
+                 
+                tfMap = findPosition(positioning ,center, box, timeStamp)
         publishImage(imageContours, 'imageWithBoxes')
 
                 

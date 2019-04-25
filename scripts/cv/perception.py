@@ -53,7 +53,6 @@ class image_converter:
     # print(pose)
 
   def image_callback(self,data):
-    # print('My eyes are open...')
 
     # fit compressed image into HSV space
     np_arr = np.fromstring(data.data, np.uint8)
