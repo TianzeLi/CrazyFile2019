@@ -74,19 +74,30 @@ def publish_cmd(goal):
 
     # Be careful with the radius and degree and region
     # goal_angle = 2*math.acos(goal_odom.pose.orientation.w) #+ math.asin(goal_odom.pose.orientation.z)
-    estimated_angle = 2*math.acos(drone_pose.pose.orientation.w) #+ math.asin(drone_pose.pose.orientation.z)
-    odo_angle = 2*math.acos(drone_origin_ow) #+ math.asin(drone_origin_oz)
+    # estimated_angle = 2*math.acos(drone_pose.pose.orientation.w) #+ math.asin(drone_pose.pose.orientation.z)
+    # odo_angle = 2*math.acos(drone_origin_ow) #+ math.asin(drone_origin_oz)
+    sum1 = math.sqrt(drone_pose.pose.orientation.z*drone_pose.pose.orientation.z + drone_pose.pose.orientation.w*drone_pose.pose.orientation.w)
+    roll0, pitch0, yaw_est = euler_from_quaternion((0.0,
+                                              0.0,
+                                              drone_pose.pose.orientation.z/sum1,
+                                              drone_pose.pose.orientation.w/sum1))
+    
+    sum2 = math.sqrt(drone_origin_oz*drone_origin_oz + drone_origin_ow*drone_origin_ow)
+    roll1, pitch1, yaw_odo = euler_from_quaternion((0.0,
+                                              0.0,
+                                              drone_origin_oz/sum2,
+                                              drone_origin_ow/sum2))
 
     # goal_angle = goal_angle + odo_angle - estimated_angle
 
     # goal_odom.pose.orientation.z = math.sin(goal_angle/2)
     # goal_odom.pose.orientation.w = math.cos(goal_angle/2)    
 
-    roll, pitch, yaw = euler_from_quaternion((goal_odom.pose.orientation.x,
+    roll2, pitch2, yaw = euler_from_quaternion((goal_odom.pose.orientation.x,
                                               goal_odom.pose.orientation.y,
                                               goal_odom.pose.orientation.z,
                                               goal_odom.pose.orientation.w))
-    yaw = yaw + odo_angle - estimated_angle
+    yaw = yaw + yaw_odo - yaw_est
 
     cmd.yaw = math.degrees(yaw)
 
