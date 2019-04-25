@@ -25,9 +25,13 @@ drone_origin_ow = 0
 def d_pose_callback(msg):
     global drone_origin_x
     global drone_origin_y
+    global drone_origin_oz
+    global drone_origin_ow
 
-    drone_origin_x = msg.pose.orientation.x
-    drone_origin_y = msg.pose.orientation.y
+    drone_origin_x = msg.pose.position.x
+    drone_origin_y = msg.pose.position.y
+    drone_origin_oz = msg.pose.orientation.z
+    drone_origin_ow = msg.pose.orientation.w
 
 def pose_callback(msg):
     global drone_pose
@@ -81,7 +85,7 @@ def publish_cmd(goal):
                                               0.0,
                                               drone_pose.pose.orientation.z/sum1,
                                               drone_pose.pose.orientation.w/sum1))
-    
+
     sum2 = math.sqrt(drone_origin_oz*drone_origin_oz + drone_origin_ow*drone_origin_ow)
     roll1, pitch1, yaw_odo = euler_from_quaternion((0.0,
                                               0.0,
