@@ -289,12 +289,38 @@ class signDetector:
         objectPoints = np.array([
                                     (-signWitdh/2, signHeight/2, 0), # top left
                                     (signWitdh/2, signHeight/2, 0), # top right
-                                    (-signWitdh/2, -signHeight/2, 0), # lower left
-                                    (signWitdh/2, -signHeight/2, 0)  # lower right
+                                    (signWitdh/2, -signHeight/2, 0), # lower right
+                                    (-signWitdh/2, -signHeight/2, 0)  # lower left
 
                                 ])
 
-        imagePoints = np.float32(box)
+        #imagePoints = np.float32(box)
+        """
+        imagePoints = np.zeros((4, 2), dtype="float32")
+        # the top-left point will have the smallest sum, whereas
+        # the bottom-right point will have the largest sum
+        s = box.sum(axis=1)
+        imagePoints[0] = box[np.argmin(s)]
+        imagePoints[2] = box[np.argmax(s)]
+    
+        # now, compute the difference between the points, the
+        # top-right point will have the smallest difference,
+        # whereas the bottom-left will have the largest difference
+        diff = np.diff(box, axis=1)
+        imagePoints[1] = box[np.argmin(diff)]
+        imagePoints[3] = box[np.argmax(diff)]
+        """
+
+        
+        imagePoints = np.array([
+                                (box[0][0]  , box[0][1]), # 1st point
+                                (box[1][0]  , box[1][1]), # 2nd point
+                                (box[2][0]  , box[2][1]), # 3rd point
+                                (box[3][0]  , box[3][1])  # 4rth point
+                            ], dtype = "double")
+        
+
+
 
         (success, rotation_vector, translation_vector) = cv2.solvePnP(objectPoints, imagePoints, cameraMatrix, distortionCoefficients)
 
@@ -303,17 +329,22 @@ class signDetector:
             t = PoseStamped()
             t.header.frame_id = 'cf1/camera'
             t.header.stamp = rospy.Time()
-            trans = tf_buf.transform(t,'cf1/odom')
+            
 
             t.pose.position.x = translation_vector[0][0]
             t.pose.position.y = translation_vector[1][0]
             t.pose.position.z = translation_vector[2][0]
+            if sign != 'z_crap':
+                print([sign, t.pose.position.x, t.pose.position.y, t.pose.position.z])
 
             (t.pose.orientation.x, 
             t.pose.orientation.y, 
             t.pose.orientation.z, 
             t.pose.orientation.w)  = quaternion_from_euler(rotation_vector[0], rotation_vector[1], rotation_vector[2])
             
+            #t.pose.orientation = np.zeros(4)
+            trans = tf_buf.transform(t,'cf1/odom')
+            # rosbag.duration(0.5)
             tOut = TransformStamped()
             tOut.header.frame_id = 'cf1/map'
             tOut.child_frame_id = 'cf1/' + sign
