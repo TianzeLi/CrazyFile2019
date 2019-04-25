@@ -33,6 +33,7 @@ drone_orientation = None
 pose_buff = []
 x_lastest = None
 y_lastest = None
+yaw_last = None
 drone_z = None
 
 
@@ -43,6 +44,7 @@ def predict_callback(msg):
     global drone_pose
     global x_lastest
     global y_lastest
+    global yaw_last
     global drone_z
 
     drone_z = msg.pose.position.z
@@ -66,24 +68,43 @@ def predict_callback(msg):
     if x_lastest == None:
         x_lastest = msg.pose.position.x
         y_lastest = msg.pose.position.y
+        yaw_last = euler_from_quaternion((msg.pose.orientation.x,
+                                              msg.pose.orientation.y,
+                                              msg.pose.orientation.z,
+                                              msg.pose.orientation.w))[2]
     if drone_pose == None:
         drone_pose = msg
 
+    roll, pitch, yaw_odo = euler_from_quaternion((msg.pose.orientation.x,
+                                              msg.pose.orientation.y,
+                                              msg.pose.orientation.z,
+                                              msg.pose.orientation.w))
     delta_x = msg.pose.position.x - x_lastest
     delta_y = msg.pose.position.y - y_lastest
+    delta_yaw = yaw_odo - yaw_last
     # drone_pose.header.stamp = rospy.Time.now()
     drone_pose.header.stamp = msg.header.stamp
     drone_pose.header.frame_id = "map"
     drone_pose.pose.position.x =  drone_pose.pose.position.x + delta_x
     drone_pose.pose.position.y = drone_pose.pose.position.y + delta_y
     drone_pose.pose.position.z = msg.pose.position.z
-    drone_pose.pose.orientation.w = drone_orientation[3]
-    drone_pose.pose.orientation.x = drone_orientation[0]
-    drone_pose.pose.orientation.y = drone_orientation[1]
-    drone_pose.pose.orientation.z = drone_orientation[2]
+
+    yaw_est = euler_from_quaternion((drone_pose.pose.orientation.x,
+                                              drone_pose.pose.orientation.y,
+                                              drone_pose.pose.orientation.z,
+                                              drone_pose.pose.orientation.w))[2]
+    yaw = yaw_est + delta_yaw
+
+    tmp_q = quaternion_from_euler(roll, pitch, yaw)
+
+    drone_pose.pose.orientation.w = tmp_q[3]
+    drone_pose.pose.orientation.x = tmp_q[0]
+    drone_pose.pose.orientation.y = tmp_q[1]
+    drone_pose.pose.orientation.z = tmp_q[2]
 
     x_lastest = msg.pose.position.x
     y_lastest = msg.pose.position.y
+    yaw_last = yaw_odo
 
     position_estimated.publish(drone_pose)
 
@@ -187,8 +208,8 @@ def measurement_callback(msg):
     # print('\n\n')
     # # print(R_m2d)
 
-    drone_pose.pose.position.x = aruco_real_pose.pose.position.x - t_c2a_m[0] - t_d2c_m[0]
-    drone_pose.pose.position.y = aruco_real_pose.pose.position.y - t_c2a_m[1] - t_d2c_m[1]
+    drone_pose.pose.position.x = aruco_real_pose.pose.position.x - 0.92*t_c2a_m[0] - t_d2c_m[0]
+    drone_pose.pose.position.y = aruco_real_pose.pose.position.y - 0.92*t_c2a_m[1] - t_d2c_m[1]
     drone_pose.pose.position.z = drone_z
 
     print(drone_pose)
