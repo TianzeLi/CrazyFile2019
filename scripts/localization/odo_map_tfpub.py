@@ -3,9 +3,11 @@
 # Using the aruco marker pose detection and compare with the pose in json file 
 
 # Virtual Bash:
-# roslaunch pras_project test2.launch
+# roslaunch pras_project test.launch
+# roslaunch dd2419_simulation aruco.launch gui:=false
 # cd dd2419_ws/src/pras_project/scripts/localization/
-# python simple_localization.py 
+# python odo_map_tfpub.py 
+# roslaunch dd2419_simulation simulation.launch
 
 # Current problem:
 
@@ -20,6 +22,7 @@ from geometry_msgs.msg import PoseStamped, TransformStamped, Vector3
 # from crazyflie_driver.msg import Position
 from aruco_msgs.msg import MarkerArray
 import tf
+
 from arucos import arucos, Rlist
 
 
@@ -60,9 +63,70 @@ def measurement_callback(msg):
     global yaw_current
 
     ###########################################################################
-    # drone orientation estimated by aruco markers 
-    aruco_relative_pose = msg.markers[0].pose.pose
-    aruco_id = msg.markers[0].id
+    # drone orientation estimated by aruco markers
+    if len(msg.markers) == 1:
+        x_estimated, y_estimated, yaw_estimated, distance_square =  measurement(msg.markers[0])
+    if len(msg.markers) > 1:
+        x_estimated1, y_estimated1, yaw_estimated1, distance_square1 =  measurement(msg.markers[0])
+        x_estimated2, y_estimated2, yaw_estimated2, distance_square2 =  measurement(msg.markers[1])
+
+        weight1 = distance_square2/(distance_square1 + distance_square2)
+        weight2 = distance_square1/(distance_square1 + distance_square2)
+
+        x_estimated = x_estimated1*weight1 + x_estimated2*weight2
+        y_estimated = y_estimated1*weight1 + y_estimated2*weight2
+        yaw_estimated = yaw_estimated1*weight1 + yaw_estimated2*weight2
+        
+        distance_square = 1.0/(1.0/distance_square1 + 1.0/distance_square2)
+
+
+    # weigths for perdict and measurements
+    weight_final = weight_func(distance_square)
+    x_estimated = (x_estimated*weight_final + x_current*1)/(1 + weight_final)
+    y_estimated = (y_estimated*weight_final + y_current*1)/(1 + weight_final)
+    yaw_estimated = (yaw_estimated*weight_final + yaw_current*1)/(1 + weight_final)
+
+    tfpb = tf2_ros.StaticTransformBroadcaster()
+    t = TransformStamped()
+    # t.header.stamp = rospy.Time.now()
+    t.header.frame_id = 'map'
+    t.child_frame_id = 'cf1/odom'
+    t.transform.translation.x = x_estimated - x_current
+    t.transform.translation.y = y_estimated - y_current
+    t.transform.translation.z = 0.0
+    # -> 0;90;-90
+    (t.transform.rotation.x,
+     t.transform.rotation.y,
+     t.transform.rotation.z,
+     t.transform.rotation.w) = quaternion_from_euler(math.radians(0),
+                                                     math.radians(0),
+                                                     math.radians(yaw_estimated - yaw_current))
+     # print(t)
+    # print("I am here")
+    tfpb.sendTransform(t)
+
+def weight_func(distance_square):
+
+    distance = math.sqrt(distance_square)
+
+    if distance <= 0.2:
+        weight = 50
+    if (distance > 0.2) and ((distance <= 0.5)):
+        weight = 20
+    if (distance > 0.5) and ((distance <= 0.7)):
+        weight = 10
+    if (distance > 0.7) and ((distance <= 0.9)):
+        weight = 5
+    if (distance > 0.9) and ((distance <= 1.0)):
+        weight = 2
+    if distance > 1.0:
+        weight = 1
+
+    return weight
+
+def measurement(marker):
+    aruco_relative_pose = marker.pose.pose
+    aruco_id = marker.id
     aruco_real_pose = arucos[aruco_id-1]
 
     gap = [[-1.0,0.0,0.0],[0.0,0.0,1.0],[0.0,1.0,0.0]]
@@ -117,31 +181,11 @@ def measurement_callback(msg):
     y_estimated = aruco_real_pose.pose.position.y - 0.95*t_c2a_m[1] - t_d2c_m[1]
     yaw_estimated = euler_from_quaternion((qx, qy, qz, qw))[2]
 
-    # print(x_estimated)
-    # print(y_estimated)
-    # print(yaw_estimated)
-    # print("\n\n")
+    distance_square = (aruco_relative_pose.position.x*aruco_relative_pose.position.x\
+                     + aruco_relative_pose.position.y*aruco_relative_pose.position.y\
+                     + aruco_relative_pose.position.z*aruco_relative_pose.position.z)
 
-    tfpb = tf2_ros.StaticTransformBroadcaster()
-    t = TransformStamped()
-    # t.header.stamp = rospy.Time.now()
-    t.header.frame_id = 'map'
-    t.child_frame_id = 'cf1/odom'
-    t.transform.translation.x = x_estimated - x_current
-    t.transform.translation.y = y_estimated - y_current
-    t.transform.translation.z = 0.0
-    # -> 0;90;-90
-    (t.transform.rotation.x,
-     t.transform.rotation.y,
-     t.transform.rotation.z,
-     t.transform.rotation.w) = quaternion_from_euler(math.radians(0),
-                                                     math.radians(0),
-                                                     math.radians(yaw_estimated - yaw_current))
-    # print("I am here")
-    tfpb.sendTransform(t)
-
-
-
+    return x_estimated, y_estimated, yaw_estimated, distance_square
 
 rospy.init_node('odo_map_tfpb')
 rate = rospy.Rate(10)  # Hz
