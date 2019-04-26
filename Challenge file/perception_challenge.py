@@ -29,7 +29,7 @@ from keras.models import load_model, Sequential
 # Import positioning
 #from positioning import Positioning
 
-modelFolder = '/home/robot/dd2419_ws/src/pras_project/scripts/cv/NN_models/'
+modelFolder = '/home/robot/dd2419_ws/src/pras_project/Challenge file/'
 singelModel = load_model(modelFolder + 'Single' + '8' + '.h5')
 singelModel._make_predict_function()
 
