@@ -23,12 +23,12 @@
 <node pkg="pras_project" type="occupancy_grid" name="occupancy_grid" />
 <node pkg="pras_project" type="crazyflie_pub" name="crazyflie_pub" />
 
-<node name="trajectory_planner" pkg="pras_project" type="trajectory_planner.py">
+<node name="trajectory_planner" pkg="pras_project" type="trajectory_planner_edited.py">
   <remap from="grid_map" to="map"/>
 </node>
 
 
-<node pkg="pras_project" type="simple_localization.py" name="measurement_from_aruco" />
+<node pkg="pras_project" type="odo_map_tfpub.py" name="odo_map_tfpb" />
 
 
 </launch>

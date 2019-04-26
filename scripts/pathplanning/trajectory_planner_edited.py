@@ -120,8 +120,8 @@ class TrajectoryPlanner:
 #Waypoint goals Test section
             self.start = final_state #test
             rospy.loginfo("final goal is the next start point") #test
-            #while True:
-            #    if State.sdistance(State.from_pose(dr_pose.pose),final_state)<0.03 and State.sangle(State.from_pose(dr_pose.pose),final_state)<0.06:
+            while True:
+                if State.sdistance(State.from_pose(dr_pose.pose),final_state)<0.03 and State.sangle(State.from_pose(dr_pose.pose),final_state)<0.06:
                     #rotate = Position()
                     #rotate.header.stamp = rospy.Time.now()
                     #rotate.header.frame_id = 'cf1/odom'
@@ -137,7 +137,7 @@ class TrajectoryPlanner:
                     #rospy.loginfo("Oh man")
                     #self.rotate.publish(rotate)
                     #    rospy.sleep(5)
-            #        break
+                    break
             if k < 2*pis:
                 if k == 1:
                     self.goal = A1
