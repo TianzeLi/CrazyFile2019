@@ -23,7 +23,7 @@ from geometry_msgs.msg import PoseStamped, TransformStamped, Vector3
 from aruco_msgs.msg import MarkerArray
 import tf
 
-from arucos import arucos, Rlist
+from arucosII import arucos, Rlist
 # from arucos_com import arucos, Rlist
 
 
