@@ -23,8 +23,8 @@ from geometry_msgs.msg import PoseStamped, TransformStamped, Vector3
 from aruco_msgs.msg import MarkerArray
 import tf
 
-from arucosII import arucos, Rlist
-# from arucos_com import arucos, Rlist
+# from arucosII import arucos, Rlist
+from arucos_com import arucos, Rlist
 
 
 x_current = 0
@@ -94,7 +94,7 @@ def measurement_callback(msg):
     t.header.frame_id = 'map'
     t.child_frame_id = 'cf1/odom'
     t.transform.translation.x = x_estimated - x_current
-    t.transform.translation.y = y_estimated - y_current
+    t.transform.translation.y = y_estimated - y_current 
     t.transform.translation.z = 0.0
     # -> 0;90;-90
     (t.transform.rotation.x,
