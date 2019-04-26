@@ -1,6 +1,7 @@
 #!/usr/bin/python2.7
 import rospy
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+from crazyflie_driver.msg import Position
 from nav_msgs.msg import OccupancyGrid, Path
 from visualization_msgs.msg import MarkerArray, Marker
 import visualization_msgs
@@ -8,7 +9,7 @@ import copy
 import planners.astar
 import json
 import math
-from tf.transformations import quaternion_from_euler
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
 from move import Move
 from state import State
@@ -27,7 +28,7 @@ posemsg = PoseStamped()
 posemsg.header.frame_id = 'cf1/odom'
 
 # Load world JSON
-with open('/home/maverick/dd2419_ws/src/course_packages/dd2419_resources/worlds_json/pre_comp.world.json') as f:
+with open('/home/maverick/dd2419_ws/src/course_packages/dd2419_resources/worlds_json/comp_without_signs.world.json') as f:
     world = json.load(f)
 
 class TrajectoryPlanner:
@@ -52,6 +53,7 @@ class TrajectoryPlanner:
 
         self.path_publisher = rospy.Publisher("trajectory", MarkerArray, queue_size=3)
         self.pose_publisher = rospy.Publisher("debug_pose", PoseStamped, queue_size=3)
+        self.rotate = rospy.Publisher("cf1/cmd_position", Position, queue_size=3)
 
         # what will be there. A module goes into variable. Isn't it too much memory consumption. Maybe I should assign function replan() to this variable?
         self.planner = planners.astar.replan
@@ -119,8 +121,23 @@ class TrajectoryPlanner:
             self.start = final_state #test
             rospy.loginfo("final goal is the next start point") #test
             #while True:
-             #   if State.sdistance(State.from_pose(dr_pose.pose),final_state)<0.015 and State.sangle(State.from_pose(dr_pose.pose),final_state)<0.06:
-              #      break
+            #    if State.sdistance(State.from_pose(dr_pose.pose),final_state)<0.03 and State.sangle(State.from_pose(dr_pose.pose),final_state)<0.06:
+                    #rotate = Position()
+                    #rotate.header.stamp = rospy.Time.now()
+                    #rotate.header.frame_id = 'cf1/odom'
+                    #rotate.x = dr_pose.pose.position.x
+                    #rotate.y = dr_pose.pose.position.y
+                    #rotate.z = dr_pose.pose.position.z
+                    #roll, pitch, yawt = euler_from_quaternion((dr_pose.pose.orientation.x,
+                    #                          dr_pose.pose.orientation.y,
+                    #                          dr_pose.pose.orientation.z,
+                    #                          dr_pose.pose.orientation.w))
+                    #for r in range(1,5):
+                    #rotate.yaw = math.degrees(yawt) + 90
+                    #rospy.loginfo("Oh man")
+                    #self.rotate.publish(rotate)
+                    #    rospy.sleep(5)
+            #        break
             if k < 2*pis:
                 if k == 1:
                     self.goal = A1

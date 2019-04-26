@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 # Load world JSON
-with open('/home/maverick/dd2419_ws/src/course_packages/dd2419_resources/worlds_json/nav_challenge.world.json') as f:
+with open('/home/maverick/dd2419_ws/src/course_packages/dd2419_resources/worlds_json/comp_without_signs.world.json') as f:
 	world = json.load(f)
 
 
@@ -18,9 +18,9 @@ with open('/home/maverick/dd2419_ws/src/course_packages/dd2419_resources/worlds_
 class map_grid:
 
 	def __init__(self):
-		self.origin_x = -4
-		self.origin_y = -2
-		self.height = 81
+		self.origin_x = world['airspace']['min'][0]
+		self.origin_y = world['airspace']['min'][1]
+		self.height = 101
 		self.width = 121
 		self.resolution = 0.05
 		self.frame_id = '/map'
@@ -173,6 +173,7 @@ class map_grid:
 			#		print '{:4}'.format(self.img[i][j]),
 			#	print
 			p += 1
+		#plt.show()
 		self.publish_map()
 
 	def coord_to_indices(self, x, y):
