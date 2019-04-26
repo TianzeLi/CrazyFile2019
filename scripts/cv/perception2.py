@@ -33,10 +33,14 @@ modelFolder = '/home/robot/dd2419_ws/src/pras_project/scripts/cv/NN_models/'
 singelModel = load_model(modelFolder + 'Single' + '8' + '.h5')
 singelModel._make_predict_function()
 
-bridge = CvBridge()
+#bridge = CvBridge()
 deg2rad = math.pi/180
 
-#TODO: Clustering and determine position of sign in world
+#TODO: 
+# Create an object for the signPoseMatrix so that it saves every poistion and not
+# only for the single image. Need to have its own object.
+
+# Clustering and determine position of sign in world
 # Positioning
 #   - 
 # Save all positions to temporary CSV file
@@ -47,11 +51,54 @@ deg2rad = math.pi/180
 #       * Put contour
 #       * Make background white
 
+DICT_NAMES = {'airport' :   0,
+                'dangerous_curve_left' :    1,
+                'dangerous_curve_right' :   2,
+                'follow_left' :     3,
+                'follow_right' :    4,
+                'junction' :    5,
+                'no_bicycle' :  6,
+                'no_heavy_truck':   7,
+                'no_parking' :  8,
+                'no_stopping_and_parking' :     9,
+                'residential' :     10,
+                'road_narrows_from_left' :  11,
+                'road_narrows_from_right' :     12,
+                'roundabout_warning' :     13,
+                'stop' :    14
+                }
+
 class signDetector:
-    def __init__(self, image):
+    def __init__(self, bridge):
+        self.bridge = bridge
+        #self.img = image
+        #self.signPoseMatrix = []
+        """
+        with open('cluster_data.csv', 'w') as csvFile:
+            writer = csv.writer(csvFile)
+            writer.writerows([["ID","x","y","z"]])
+        csvFile.close()
+        """
+        self.list_loc_signs = []
+
+        #self.mainDetector(image)
+        #self.positioner = Positioning()
+        #img_sub = rospy.Subscriber("/cf1/camera/image_raw", Image,imageCallback)
+        self.img_sub = rospy.Subscriber("/cf1/camera/image_raw/decompressed", Image,self.imageCallback)
+        self.pose_sub = rospy.Subscriber("/cf1/pose", PoseStamped, self.poseCallback)
+
+        # publish the masked image with first contour extraction
+        self.contour_image_pub = rospy.Publisher("/contourimage", Image, queue_size=2)
+
+        self.counter_detected_signs = 0 # when we reach 500 signs seing I save them in a CSV file and empty the array to start again
+        self.clusters_arr = np.empty((0,6)) # where I save the signs with its position. [Label,X,Y,Z,counter,index]
+        # where counter is times I have seen the sign in a small area (number elements cluster), index is just to keep track of number clusters
+        # and X,Y,Z are average of the signs of each cluster
+        self.index_array = 0 # counter of number of clusters
+    
+    def initImage(self, image):
         self.img = image
         self.mainDetector(image)
-        #self.positioner = Positioning()
 
     def mainDetector(self, img):
         # **PREPROCESS IMAGE***
@@ -70,7 +117,7 @@ class signDetector:
         # **DETECT EDGES AND CONTOURS**
         # canny edge detection
         edgesDetected = cv2.Canny(imageBlurred, 10, 3, 3)
-        publishImage(edgesDetected, 'canny')
+        self.publishImage(edgesDetected, 'canny')
         # find contours
         edges = edgesDetected.copy()
         contours = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -134,26 +181,20 @@ class signDetector:
                 center = (x,y)
 
                 #Draw contour on image and classify using NN:
-                publishImage(imageWarped, 'warp')
-                
+                self.publishImage(imageWarped, 'warp')
                 classifiedSign = self.classifySign(imageWarped)
-                cv2.drawContours(imageContours, [box], -1, (0, 255, 9), 2) # draw box
-                cv2.putText(imageContours, classifiedSign, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                pose = PoseStamped()
-                timeStamp = rospy.Time.now()
-                 
-                #tfMap = positioner.find_location(center, box, timeStamp)
-                self.positionSign(shape, box, classifiedSign)
-                #print(tfMap)
-                #if tfMap != None:
-                    #print([classifiedSign, tfMap.pose.position.x])
-                # Can print
-        publishImage(imageContours, 'imageWithBoxes')
 
-        
+                cv2.drawContours(imageContours, [box], -1, (0, 255, 9), 2) # draw box
+                cv2.putText(imageContours, classifiedSign, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)           
+                
+                self.positionSign(shape, box, classifiedSign)
+                
+        self.publishImage(imageContours, 'imageWithBoxes')
+
+
     
     def classifySign(self, image):
-        print('IM CLASSIFYING!!! YAYA')
+        #print('IM CLASSIFYING!!! YAYA')
         model = singelModel
         classNames = ['airport', 
                         'dangerous_curve_left',
@@ -179,7 +220,6 @@ class signDetector:
         return signPredicted
 
         
-
     def determineContourShape(self, cnt):
         area = cv2.contourArea(cnt)
         arcLen = cv2.arcLength(cnt, True)
@@ -211,7 +251,6 @@ class signDetector:
             shape = signShapes[minErrorPos]
 
         return shape
-
 
 
     def checkColors(self, image):
@@ -310,7 +349,6 @@ class signDetector:
         diff = np.diff(box, axis=1)
         imagePoints[1] = box[np.argmin(diff)]
         imagePoints[3] = box[np.argmax(diff)]
-        
 
         """
         imagePoints = np.array([
@@ -320,10 +358,6 @@ class signDetector:
                                 (box[3][0]  , box[3][1])  # 4rth point
                             ], dtype = "double")
         """
-        
-
-
-
         (success, rotation_vector, translation_vector) = cv2.solvePnP(objectPoints, imagePoints, cameraMatrix, distortionCoefficients)
 
         if success and sign != 'z_crap':
@@ -336,7 +370,8 @@ class signDetector:
             t.pose.position.x = translation_vector[0][0]
             t.pose.position.y = translation_vector[1][0]
             t.pose.position.z = translation_vector[2][0]
-            print([sign, t.pose.position.x, t.pose.position.y, t.pose.position.z])
+            posit = t.pose.position
+            #print([sign, posit.x, posit.y, posit.z])
 
             (t.pose.orientation.x, 
             t.pose.orientation.y, 
@@ -354,8 +389,46 @@ class signDetector:
 
             broadcaster.sendTransform(tOut)
 
-            #TODO: Build a matrix(or write to csv file instantly) with class names and positions
-            # Then use this for clustering.
+            ## ----------------------Clustering--------------------------------
+
+            ID_sign = DICT_NAMES[sign] # Codify label as Integer
+            #print("11111111111 : " + str(ID_sign))
+            
+            # Filter to just get the elements of the same sign
+            #print("BEGIN: " + str(self.clusters_arr))
+            filtered_by_sign = self.clusters_arr[self.clusters_arr[:, 0] == ID_sign]
+            
+
+            #print(['self.clusters_arr[:, 0] = ',  self.clusters_arr[:, 0]])
+            #print(['filtered_by_sign = ', filtered_by_sign])
+            if filtered_by_sign.size != 0: # Check if that sign is in the cluster array or not, if no add it but if yes
+            # check if the detecetd sign is close to the cluster of the same sign type detected before
+                flag = 0
+                for elements in filtered_by_sign:
+                    # if distance less than 2 meters
+                    if np.abs(posit.x - elements[1]) + np.abs(posit.y - elements[2]) + np.abs(posit.z - elements[3]) < 2:
+                        av_x = (posit.x + elements[1]*elements[4])/float(elements[4]+1) # update average position cluster with new measurement
+                        av_y = (posit.y + elements[2]*elements[4])/float(elements[4]+1)
+                        av_z = (posit.z + elements[3]*elements[4])/float(elements[4]+1)
+                        self.clusters_arr[self.clusters_arr[:,5] == elements[5], :] = [ID_sign, av_x, av_y, av_z, elements[4]+1, elements[5]]
+                        flag = 1
+                        
+                        break
+                if flag == 0: # no sign close to it, so create it
+                    self.clusters_arr = np.append(
+                        self.clusters_arr,
+                        np.array([[ID_sign, posit.x, posit.y, posit.z, 1, self.index_array]]),
+                        axis = 0)
+                    self.index_array = self.index_array+1
+            else:
+                self.clusters_arr = np.append(
+                    self.clusters_arr,
+                    np.array([[ID_sign, posit.x, posit.y, posit.z, 1, self.index_array]]),
+                    axis = 0)
+                #print("SHAPE: " + str(self.clusters_arr))
+                self.index_array = self.index_array+1
+
+
 
     def writeRowToCSV(fileName, sign, position):
 
@@ -364,59 +437,71 @@ class signDetector:
 
             csvWriter.writerow([sign, position])
 
+      
+
+    def imageCallback(self, data):
+        try:
+            image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+        except CvBridgeError as e:
+            print(e)
+
+        # Initialse image in class and run mainDetector function
+        self.mainDetector(image) 
+
+        ## ------ Save every 500 detected signs on a CSV -----------------------------
+        if self.counter_detected_signs == 500:
+            #process
+            self.clusters_arr = self.clusters_arr[self.clusters_arr[:, 4] > 13] # check has more than 13 elements
+            
+            #with open('cluster_data.csv', 'a') as csvFile:
+            #    writer = csv.writer(csvFile)
+            #    writer.writerows(self.clusters_arr)
+            #csvFile.close()
+
+            self.counter_detected_signs = 0
+            #self.clusters_arr = np.empty((0,6)) # Label, X,Y,Z, counter, index
+            #self.index_array = 0
+            
+    def publishImage(self, image, name):
+        imgPub = rospy.Publisher("/"+name, Image, queue_size=2)
+
+        imgLen = np.array(image).shape
+        try:
+            if len(imgLen) == 2:
+                imgPub.publish(self.bridge.cv2_to_imgmsg(image, "8UC1"))
+            else:
+                imgPub.publish(self.bridge.cv2_to_imgmsg(image, "bgr8"))
+        except CvBridgeError as e:
+            print(e)
 
 
-        
+    def poseCallback(self, data):
+        poseOfDrone = data
+        broadcaster = tf2_ros.TransformBroadcaster()
+        t = TransformStamped()
+        t.header.frame_id = 'cf1/odom'
+        t.child_frame_id = 'cf1/base_link'
+        t.header.stamp = rospy.Time.now()
+        t.transform.translation = poseOfDrone.pose.position
+        t.transform.rotation = poseOfDrone.pose.orientation
+        broadcaster.sendTransform(t)
 
-def imageCallback(data):
-    try:
-        image = bridge.imgmsg_to_cv2(data, "bgr8")
-    except CvBridgeError as e:
-        print(e)
+        # Camera link to Base link
+        tf_c2b = TransformStamped()
+        tf_c2b.header.frame_id = 'cf1/base_link'
+        tf_c2b.header.stamp = rospy.Time.now()
+        tf_c2b.child_frame_id = 'cf1/camera'
+        tf_c2b.transform.translation.x = 0.01
+        tf_c2b.transform.translation.y = 0
+        tf_c2b.transform.translation.z = 0.02
+        (tf_c2b.transform.rotation.x,
+        tf_c2b.transform.rotation.y,
+        tf_c2b.transform.rotation.z,
+        tf_c2b.transform.rotation.w) = quaternion_from_euler(90*deg2rad, 180*deg2rad, 90*deg2rad) #roll, pitch, yaw
+        broadcaster.sendTransform(tf_c2b)
 
-    signD = signDetector(image)
-
-
-def publishImage(image, name):
-    imgPub = rospy.Publisher("/"+name, Image, queue_size=2)
-
-    imgLen = np.array(image).shape
-    try:
-        if len(imgLen) == 2:
-            imgPub.publish(bridge.cv2_to_imgmsg(image, "8UC1"))
-        else:
-            imgPub.publish(bridge.cv2_to_imgmsg(image, "bgr8"))
-    except CvBridgeError as e:
-        print(e)
-
-
-def poseCallback(data):
-    poseOfDrone = data
-    broadcaster = tf2_ros.TransformBroadcaster()
-    t = TransformStamped()
-    t.header.frame_id = 'cf1/odom'
-    t.child_frame_id = 'cf1/base_link'
-    t.header.stamp = rospy.Time.now()
-    t.transform.translation = poseOfDrone.pose.position
-    t.transform.rotation = poseOfDrone.pose.orientation
-    broadcaster.sendTransform(t)
-
-    # Camera link to Base link
-    tf_c2b = TransformStamped()
-    tf_c2b.header.frame_id = 'cf1/base_link'
-    tf_c2b.header.stamp = rospy.Time.now()
-    tf_c2b.child_frame_id = 'cf1/camera'
-    tf_c2b.transform.translation.x = 0.01
-    tf_c2b.transform.translation.y = 0
-    tf_c2b.transform.translation.z = 0.02
-    (tf_c2b.transform.rotation.x,
-    tf_c2b.transform.rotation.y,
-    tf_c2b.transform.rotation.z,
-    tf_c2b.transform.rotation.w) = quaternion_from_euler(90*deg2rad, 180*deg2rad, 90*deg2rad) #roll, pitch, yaw
-    broadcaster.sendTransform(tf_c2b)
-
-
-
+    def getClust():
+        return self.filtered_by_sign
 
 
 rospy.init_node('perception2', anonymous=True)
@@ -427,18 +512,25 @@ def main(args):
     # Add code so that we only look at every 4th image
 
     #img_sub = rospy.Subscriber("/cf1/camera/image_raw", Image,imageCallback)
-    img_sub = rospy.Subscriber("/cf1/camera/image_raw/decompressed", Image,imageCallback)
-    pose_sub = rospy.Subscriber("/cf1/pose", PoseStamped, poseCallback)
+    #img_sub = rospy.Subscriber("/cf1/camera/image_raw/decompressed", Image,imageCallback)
+    #pose_sub = rospy.Subscriber("/cf1/pose", PoseStamped, poseCallback)
 
     # publish the masked image with first contour extraction
-    contour_image_pub = rospy.Publisher("/contourimage", Image, queue_size=2)
-
+    #contour_image_pub = rospy.Publisher("/contourimage", Image, queue_size=2)
+    bridge = CvBridge()
+    sd = signDetector(bridge)
 
     print("running...")
     try:
         rospy.spin()
     except KeyboardInterrupt:
         print("Shutting down")
+
+    """
+    cluster = sd.getClust()
+    with open('sign_data.csv', 'w') as csvFile:
+        csvWriter = csv.writer(csvFile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    """
 
     cv2.destroyAllWindows()
 
