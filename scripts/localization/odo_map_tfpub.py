@@ -24,6 +24,7 @@ from aruco_msgs.msg import MarkerArray
 import tf
 
 from arucos import arucos, Rlist
+# from arucos_com import arucos, Rlist
 
 
 x_current = 0
@@ -44,10 +45,11 @@ def current_pose_callback(msg):
     j = msg.pose.orientation.y
     k = msg.pose.orientation.z
     r = msg.pose.orientation.w
+    yaw_current = euler_from_quaternion((i, j, k, r))[2]
 
     x_current = msg.pose.position.x
     y_current = msg.pose.position.y
-    yaw_current = euler_from_quaternion((i, j, k, r))[2]
+
     # print(x_current)
     # print(y_current)
     # print(yaw_current)
@@ -110,17 +112,17 @@ def weight_func(distance_square):
     distance = math.sqrt(distance_square)
 
     if distance <= 0.2:
-        weight = 50
+        weight = 100
     if (distance > 0.2) and ((distance <= 0.5)):
-        weight = 20
+        weight = 40
     if (distance > 0.5) and ((distance <= 0.7)):
-        weight = 10
+        weight = 20
     if (distance > 0.7) and ((distance <= 0.9)):
-        weight = 5
+        weight = 10
     if (distance > 0.9) and ((distance <= 1.0)):
-        weight = 2
+        weight = 5
     if distance > 1.0:
-        weight = 1
+        weight = 2
 
     return weight
 
@@ -184,6 +186,11 @@ def measurement(marker):
     distance_square = (aruco_relative_pose.position.x*aruco_relative_pose.position.x\
                      + aruco_relative_pose.position.y*aruco_relative_pose.position.y\
                      + aruco_relative_pose.position.z*aruco_relative_pose.position.z)
+    
+    print(x_estimated)
+    print(y_estimated)
+    print(yaw_estimated)
+    print("\n\n")
 
     return x_estimated, y_estimated, yaw_estimated, distance_square
 
