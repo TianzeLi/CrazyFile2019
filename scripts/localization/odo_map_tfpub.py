@@ -29,9 +29,10 @@ from geometry_msgs.msg import PoseStamped, TransformStamped, Vector3
 from aruco_msgs.msg import MarkerArray
 import tf
 
+# from arucos import arucos, Rlist
 # from arucosII import arucos, Rlist
-# from arucos_com import arucos, Rlist
-from arucos import arucos, Rlist
+from arucos_com import arucos, Rlist
+# from arucos import arucos, Rlist
 
 
 
@@ -53,9 +54,6 @@ drone_pose = None
 
 
 def current_pose_callback(msg):
-    global x_current
-    global y_current
-    global yaw_current
 
     global x_osb
     global y_osb
@@ -123,6 +121,10 @@ def measurement_callback(msg):
 
     global drone_pose
 
+    global x_osb
+    global y_osb
+    global yaw_osb
+
     ###########################################################################
 
     i = drone_pose.pose.orientation.x
@@ -163,8 +165,8 @@ def measurement_callback(msg):
     # t.header.stamp = rospy.Time.now()
     t.header.frame_id = 'map'
     t.child_frame_id = 'cf1/odom'
-    t.transform.translation.x = x_estimated - x_current
-    t.transform.translation.y = y_estimated - y_current 
+    t.transform.translation.x = x_estimated - x_osb
+    t.transform.translation.y = y_estimated - y_osb 
     t.transform.translation.z = 0.0
     # -> 0;90;-90
     (t.transform.rotation.x,
@@ -172,7 +174,7 @@ def measurement_callback(msg):
      t.transform.rotation.z,
      t.transform.rotation.w) = quaternion_from_euler(math.radians(0),
                                                      math.radians(0),
-                                                     math.radians(yaw_estimated - yaw_current))
+                                                     math.radians(yaw_estimated - yaw_osb))
     # print(t)
     # print("I am here")
     tfpb.sendTransform(t)
