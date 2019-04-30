@@ -4,12 +4,18 @@
 
 # Virtual Bash:
 # roslaunch pras_project test.launch
-# roslaunch dd2419_simulation aruco.launch gui:=false
-# cd dd2419_ws/src/pras_project/scripts/localization/
-# python odo_map_tfpub.py 
+
 # roslaunch dd2419_simulation simulation.launch
 
-# Current problem:
+# roslaunch dd2419_simulation aruco.launch gui:=false
+
+# cd dd2419_ws/src/pras_project/scripts/localization/
+# python odo_map_tfpub.py 
+# rosrun tf2_ros static_transform_publisher 0 0 0 0 0 0 map cf1/odom
+
+# Current problem: ???
+
+
 
 import math
 import numpy as np
@@ -24,7 +30,9 @@ from aruco_msgs.msg import MarkerArray
 import tf
 
 # from arucosII import arucos, Rlist
-from arucos_com import arucos, Rlist
+# from arucos_com import arucos, Rlist
+from arucos import arucos, Rlist
+
 
 
 x_current = 0
@@ -35,24 +43,73 @@ x_estimated = 0
 y_estimated = 0 
 yaw_estimated = 0
 
+# One step before
+x_osb = None
+y_osb = None
+yaw_osb = None
+
+drone_pose = None
+
+
 
 def current_pose_callback(msg):
     global x_current
     global y_current
     global yaw_current
 
-    i = msg.pose.orientation.x
-    j = msg.pose.orientation.y
-    k = msg.pose.orientation.z
-    r = msg.pose.orientation.w
-    yaw_current = euler_from_quaternion((i, j, k, r))[2]
+    global x_osb
+    global y_osb
+    global yaw_osb
 
-    x_current = msg.pose.position.x
-    y_current = msg.pose.position.y
+    global drone_pose
+
+    if x_osb == None:
+        x_osb = msg.pose.position.x
+        y_osb = msg.pose.position.y
+        yaw_osb = euler_from_quaternion((msg.pose.orientation.x,
+                                        msg.pose.orientation.y,
+                                        msg.pose.orientation.z,
+                                        msg.pose.orientation.w))[2]
+    if drone_pose == None:
+        drone_pose = msg
+
+    roll, pitch, yaw_odo = euler_from_quaternion((msg.pose.orientation.x,
+                                                msg.pose.orientation.y,
+                                                msg.pose.orientation.z,
+                                                msg.pose.orientation.w))
+    delta_x = msg.pose.position.x - x_osb
+    delta_y = msg.pose.position.y - y_osb
+    delta_yaw = yaw_odo - yaw_osb
+
+    # drone_pose.header.stamp = rospy.Time.now()
+    drone_pose.header.stamp = msg.header.stamp
+    drone_pose.header.frame_id = "map"
+    drone_pose.pose.position.x =  drone_pose.pose.position.x + delta_x
+    drone_pose.pose.position.y = drone_pose.pose.position.y + delta_y
+    drone_pose.pose.position.z = msg.pose.position.z
+
+    yaw_est = euler_from_quaternion((drone_pose.pose.orientation.x,
+                                              drone_pose.pose.orientation.y,
+                                              drone_pose.pose.orientation.z,
+                                              drone_pose.pose.orientation.w))[2]
+    yaw = yaw_est + delta_yaw
+
+    tmp_q = quaternion_from_euler(roll, pitch, yaw)
+
+    drone_pose.pose.orientation.w = tmp_q[3]
+    drone_pose.pose.orientation.x = tmp_q[0]
+    drone_pose.pose.orientation.y = tmp_q[1]
+    drone_pose.pose.orientation.z = tmp_q[2]
 
     # print(x_current)
     # print(y_current)
     # print(yaw_current)
+
+    position_estimated.publish(drone_pose)
+
+    x_osb = msg.pose.position.x
+    y_osb = msg.pose.position.y
+    yaw_osb = yaw_odo
 
 
 def measurement_callback(msg):
@@ -64,7 +121,20 @@ def measurement_callback(msg):
     global y_current
     global yaw_current
 
+    global drone_pose
+
     ###########################################################################
+
+    i = drone_pose.pose.orientation.x
+    j = drone_pose.pose.orientation.y
+    k = drone_pose.pose.orientation.z
+    r = drone_pose.pose.orientation.w
+    yaw_current = euler_from_quaternion((i, j, k, r))[2]
+
+    x_current = drone_pose.pose.position.x
+    y_current = drone_pose.pose.position.y
+
+
     # drone orientation estimated by aruco markers
     if len(msg.markers) == 1:
         x_estimated, y_estimated, yaw_estimated, distance_square =  measurement(msg.markers[0])
@@ -88,7 +158,7 @@ def measurement_callback(msg):
     y_estimated = (y_estimated*weight_final + y_current*1)/(1 + weight_final)
     yaw_estimated = (yaw_estimated*weight_final + yaw_current*1)/(1 + weight_final)
 
-    tfpb = tf2_ros.StaticTransformBroadcaster()
+    # tfpb = tf2_ros.StaticTransformBroadcaster()
     t = TransformStamped()
     # t.header.stamp = rospy.Time.now()
     t.header.frame_id = 'map'
@@ -103,9 +173,33 @@ def measurement_callback(msg):
      t.transform.rotation.w) = quaternion_from_euler(math.radians(0),
                                                      math.radians(0),
                                                      math.radians(yaw_estimated - yaw_current))
-     # print(t)
+    # print(t)
     # print("I am here")
     tfpb.sendTransform(t)
+
+
+    # drone_pose.header.stamp = rospy.Time.now()
+    drone_pose = PoseStamped()
+    drone_pose.header.stamp = msg.header.stamp
+    drone_pose.header.frame_id = "map"
+    drone_pose.pose.position.x = x_estimated
+    drone_pose.pose.position.y = y_estimated
+    drone_pose.pose.position.z = drone_pose.pose.position.z
+
+    roll, pitch, yaw_former = euler_from_quaternion((drone_pose.pose.orientation.x,
+                                                drone_pose.pose.orientation.y,
+                                                drone_pose.pose.orientation.z,
+                                                drone_pose.pose.orientation.w))
+    
+    tmp_q = quaternion_from_euler(roll, pitch, yaw_estimated)
+    drone_pose.pose.orientation.w = tmp_q[3]
+    drone_pose.pose.orientation.x = tmp_q[0]
+    drone_pose.pose.orientation.y = tmp_q[1]
+    drone_pose.pose.orientation.z = tmp_q[2]
+
+
+    position_estimated.publish(drone_pose)
+
 
 def weight_func(distance_square):
 
@@ -187,17 +281,40 @@ def measurement(marker):
                      + aruco_relative_pose.position.y*aruco_relative_pose.position.y\
                      + aruco_relative_pose.position.z*aruco_relative_pose.position.z)
     
-    print(x_estimated)
-    print(y_estimated)
-    print(yaw_estimated)
-    print("\n\n")
+    # print(x_estimated)
+    # print(y_estimated)
+    # print(yaw_estimated)
+    # print("\n\n")
 
     return x_estimated, y_estimated, yaw_estimated, distance_square
 
 rospy.init_node('odo_map_tfpb')
 rate = rospy.Rate(10)  # Hz
+position_estimated  = rospy.Publisher('/localization', PoseStamped, queue_size = 3)
+tfpb = tf2_ros.StaticTransformBroadcaster()
+
 
 def main():
+
+    print("Publishing the initial starting point")
+
+    t = TransformStamped()
+    t.header.stamp = rospy.Time.now()
+    t.header.frame_id = 'map'
+    t.child_frame_id = 'cf1/odom'
+    t.transform.translation.x = 0.0
+    t.transform.translation.y = 0.0 
+    t.transform.translation.z = 0.0
+    # -> 0;90;-90
+    (t.transform.rotation.x,
+     t.transform.rotation.y,
+     t.transform.rotation.z,
+     t.transform.rotation.w) = quaternion_from_euler(math.radians(0),
+                                                     math.radians(0),
+                                                     math.radians(0))
+    # print(t)
+    # print("I am here")
+    tfpb.sendTransform(t)
 
     drone_pose_origin = rospy.Subscriber('/cf1/pose', PoseStamped, current_pose_callback)
     marker_detection = rospy.Subscriber('/aruco/markers', MarkerArray, measurement_callback) 

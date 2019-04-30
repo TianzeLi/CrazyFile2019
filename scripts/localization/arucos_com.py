@@ -226,11 +226,11 @@ Rlist.append([[-1, 0, 0],[0, -1, 0],[0, 0, 1]])
 
 # Original content in the json file
 # euler angle in orientation???
-"markers": [
+# "markers": [
     # {"id": 1, "pose": {"position": [  2.00,  1.50, 0.10], "orientation": [  0.0, -90.0,  90.0]}},
     # {"id": 2, "pose": {"position": [  3.50,  3.00, 0.10], "orientation": [  0.0, -90.0,  90.0]}},
     # {"id": 3, "pose": {"position": [  5.00,  1.50, 0.10], "orientation": [  0.0, -90.0,  90.0]}},
-    {"id": 4, "pose": {"position": [  5.50,  2.50, 0.10], "orientation": [  0.0, -90.0, 180.0]}},
+    # {"id": 4, "pose": {"position": [  5.50,  2.50, 0.10], "orientation": [  0.0, -90.0, 180.0]}},
     # {"id": 5, "pose": {"position": [  3.50,  1.50, 0.10], "orientation": [  0.0, -90.0, -90.0]}},
     # {"id": 6, "pose": {"position": [  2.15,  2.50, 0.10], "orientation": [  0.0, -90.0, -90.0]}},
     # {"id": 7, "pose": {"position": [  2.00,  2.50, 0.10], "orientation": [  0.0, -90.0, -90.0]}},
@@ -241,4 +241,4 @@ Rlist.append([[-1, 0, 0],[0, -1, 0],[0, 0, 1]])
     # {"id":13, "pose": {"position": [  4.50,  1.00, 0.00], "orientation": [ 90.0,   0.0,    0.0]}},
     # {"id":14, "pose": {"position": [  2.50,  3.50, 0.00], "orientation": [ 90.0,   0.0,    0.0]}},
     # {"id":15, "pose": {"position": [  0.50,  3.45, 0.00], "orientation": [ 90.0,   0.0,    0.0]}}
-  ]
+  # ]
